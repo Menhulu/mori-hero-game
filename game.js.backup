@@ -1,0 +1,656 @@
+/**
+ * 怪兽砍杀游戏 - 主逻辑文件
+ * 
+ * 这是一个基于身体姿势检测的互动砍杀游戏
+ * 使用 MediaPipe Pose 进行实时姿势检测
+ * 
+ * 游戏特点：
+ * - 4个递进难度的关卡
+ * - 身体姿势挥砍检测
+ * - 动态背景切换
+ * - 连击系统和得分机制
+ */
+
+/**
+ * 关卡配置数组
+ * 每个关卡包含完整的关卡参数配置
+ * 可轻松添加新关卡或修改现有关卡
+ */
+const STAGE_CONFIGS = [
+    {
+        id: 1,
+        name: "浅海探险",
+        targetScore: 240,
+        lives: 5,
+        background: "img/background.png",
+        monsters: {
+            size: { min: 110, max: 170 },
+            speed: { vx: 0.7, vyMin: 6, vyMax: 9 },
+            gravity: 0.06,
+            spawnInterval: { min: 600, max: 1200 },
+            spawnCount: { min: 3, max: 6 },
+            levelUpBonus: 0.3
+        },
+        rotationSpeed: 0.015,
+        pointsPerKill: 10
+    },
+    {
+        id: 2,
+        name: "深海探索",
+        targetScore: 150,
+        lives: 5,
+        background: "img/bg_Bak.png",
+        monsters: {
+            size: { min: 100, max: 160 },
+            speed: { vx: 0.9, vyMin: 7, vyMax: 11 },
+            gravity: 0.07,
+            spawnInterval: { min: 700, max: 1400 },
+            spawnCount: { min: 3, max: 7 },
+            levelUpBonus: 0.5
+        },
+        rotationSpeed: 0.02,
+        pointsPerKill: 15
+    },
+    {
+        id: 3,
+        name: "海底深渊",
+        targetScore: 250,
+        lives: 4,
+        background: "img/f1d4708a41ed3b9280384b9aa85012c5.png",
+        monsters: {
+            size: { min: 90, max: 150 },
+            speed: { vx: 1.1, vyMin: 8, vyMax: 13 },
+            gravity: 0.09,
+            spawnInterval: { min: 800, max: 1600 },
+            spawnCount: { min: 4, max: 8 },
+            levelUpBonus: 0.7
+        },
+        rotationSpeed: 0.03,
+        pointsPerKill: 20
+    },
+    {
+        id: 4,
+        name: "终极挑战",
+        targetScore: 400,
+        lives: 4,
+        background: "img/background.png",
+        monsters: {
+            size: { min: 80, max: 140 },
+            speed: { vx: 1.3, vyMin: 9, vyMax: 15 },
+            gravity: 0.1,
+            spawnInterval: { min: 900, max: 1800 },
+            spawnCount: { min: 5, max: 10 },
+            levelUpBonus: 1
+        },
+        rotationSpeed: 0.04,
+        pointsPerKill: 25
+    }
+];
+
+/**
+ * 游戏状态对象
+ * 管理游戏运行时的所有状态数据
+ */
+let gameState = {
+    isPlaying: false,
+    currentStage: 0,
+    totalScore: 0,
+    stageScore: 0,
+    combo: 0,
+    lives: 5,
+    monsters: [],
+    slashTrails: [],
+    lastLeftWrist: null,
+    lastRightWrist: null
+};
+
+// 获取Canvas和DOM元素
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const video = document.getElementById('camera-feed');
+const backgroundLayer = document.getElementById('background-layer');
+const startScreen = document.getElementById('start-screen');
+const stageCompleteScreen = document.getElementById('stage-complete-screen');
+const gameCompleteScreen = document.getElementById('game-complete-screen');
+const gameOverScreen = document.getElementById('game-over-screen');
+
+// 获取按钮元素
+const startBtn = document.getElementById('start-btn');
+const nextStageBtn = document.getElementById('next-stage-btn');
+const playAgainBtn = document.getElementById('play-again-btn');
+const restartBtn = document.getElementById('restart-btn');
+
+// 获取UI显示元素
+const scoreEl = document.getElementById('score');
+const stageEl = document.getElementById('stage');
+const targetEl = document.getElementById('target');
+const comboEl = document.getElementById('combo');
+const livesEl = document.getElementById('lives');
+const completedStageEl = document.getElementById('completed-stage');
+const stageScoreEl = document.getElementById('stage-score');
+const totalScoreEl = document.getElementById('total-score');
+const reachedStageEl = document.getElementById('reached-stage');
+const finalScoreEl = document.getElementById('final-score');
+
+/**
+ * 怪兽图片路径数组
+ * 添加新怪兽只需将图片放入 img/sea-monster/ 并在此添加路径
+ */
+const monsterImages = [
+    'img/sea-monster/blowfish.png',
+    'img/sea-monster/crabs.png',
+    'img/sea-monster/eel.png',
+    'img/sea-monster/electric fish.png',
+    'img/sea-monster/octopus.png',
+    'img/sea-monster/robot.png',
+    'img/sea-monster/starfish.png',
+    'img/sea-monster/turtle.png'
+];
+
+/**
+ * 预加载的怪兽图片对象数组
+ */
+const loadedMonsterImages = [];
+
+/**
+ * 调整Canvas尺寸以适应窗口
+ */
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+// 监听窗口大小变化
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+/**
+ * 预加载所有怪兽图片
+ * 确保游戏开始前所有图片都已加载完成
+ */
+async function preloadImages() {
+    for (const src of monsterImages) {
+        const img = new Image();
+        img.src = src;
+        await new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve;
+        });
+        loadedMonsterImages.push(img);
+    }
+}
+
+/**
+ * 怪兽类
+ * 管理单个怪兽的属性和行为
+ */
+class Monster {
+    /**
+     * 构造函数
+     * @param {Object} config - 关卡配置对象
+     */
+    constructor(config) {
+        this.size = config.monsters.size.min + Math.random() * (config.monsters.size.max - config.monsters.size.min);
+        this.monsterTypeIndex = Math.floor(Math.random() * loadedMonsterImages.length);
+        this.opacity = 1;
+        
+        const spawnType = Math.random();
+        
+        if (spawnType < 0.35) {
+            this.x = this.size / 2 + Math.random() * (canvas.width - this.size);
+            this.y = canvas.height + this.size / 2;
+            this.vx = (Math.random() - 0.5) * config.monsters.speed.vx * 1.5;
+            this.vy = -(config.monsters.speed.vyMin + Math.random() * (config.monsters.speed.vyMax - config.monsters.speed.vyMin));
+        } else if (spawnType < 0.5) {
+            this.x = -this.size / 2;
+            this.y = canvas.height * 0.25 + Math.random() * canvas.height * 0.5;
+            this.vx = config.monsters.speed.vx * (0.6 + Math.random() * 0.7);
+            this.vy = -(config.monsters.speed.vyMin * 0.4 + Math.random() * config.monsters.speed.vyMin * 0.5);
+        } else if (spawnType < 0.65) {
+            this.x = canvas.width + this.size / 2;
+            this.y = canvas.height * 0.25 + Math.random() * canvas.height * 0.5;
+            this.vx = -config.monsters.speed.vx * (0.6 + Math.random() * 0.7);
+            this.vy = -(config.monsters.speed.vyMin * 0.4 + Math.random() * config.monsters.speed.vyMin * 0.5);
+        } else if (spawnType < 0.8) {
+            this.x = this.size / 2 + Math.random() * (canvas.width - this.size);
+            this.y = canvas.height * 0.6 + Math.random() * canvas.height * 0.3;
+            this.vx = (Math.random() - 0.5) * config.monsters.speed.vx * 1.2;
+            this.vy = -(config.monsters.speed.vyMin * 0.6 + Math.random() * config.monsters.speed.vyMin * 0.4);
+        } else {
+            this.x = this.size / 2 + Math.random() * (canvas.width - this.size);
+            this.y = -this.size / 2;
+            this.vx = (Math.random() - 0.5) * config.monsters.speed.vx * 0.8;
+            this.vy = config.monsters.speed.vyMin * 0.5 + Math.random() * config.monsters.speed.vyMin * 0.5;
+        }
+        
+        this.gravity = config.monsters.gravity;
+        this.rotation = 0;
+        this.rotationSpeed = 0;
+        this.image = loadedMonsterImages[this.monsterTypeIndex] || null;
+        this.alive = true;
+        this.points = config.pointsPerKill;
+    }
+
+    /**
+     * 更新怪兽位置和状态
+     * @returns {boolean} - 怪兽是否还在屏幕内
+     */
+    update() {
+        this.vy += this.gravity;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < this.size / 2) {
+            this.x = this.size / 2;
+            this.vx = Math.abs(this.vx);
+        } else if (this.x > canvas.width - this.size / 2) {
+            this.x = canvas.width - this.size / 2;
+            this.vx = -Math.abs(this.vx);
+        }
+
+        if (this.y > canvas.height + 400 || this.y < -this.size - 200 ||
+            this.x < -this.size - 200 || this.x > canvas.width + this.size + 200) {
+            if (this.alive && this.y > canvas.height - 100) {
+                gameState.lives--;
+                gameState.combo = 0;
+                updateUI();
+                if (gameState.lives <= 0) {
+                    endGame();
+                }
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 在Canvas上绘制怪兽
+     * @param {CanvasRenderingContext2D} ctx - Canvas上下文
+     */
+    draw(ctx) {
+        if (!this.alive) return;
+        if (this.image && this.image.complete) {
+            ctx.drawImage(this.image, this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+        } else {
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = '30px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('👾', this.x, this.y);
+        }
+    }
+
+    /**
+     * 检测挥砍是否命中怪兽
+     * @param {number} x - 挥砍点X坐标
+     * @param {number} y - 挥砍点Y坐标
+     * @returns {boolean} - 是否命中
+     */
+    checkHit(x, y) {
+        if (!this.alive) return false;
+        const dx = this.x - x;
+        const dy = this.y - y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < this.size / 2 + 60;
+    }
+}
+
+/**
+ * 挥砍轨迹类
+ * 管理挥砍刀光的视觉效果
+ */
+class SlashTrail {
+    /**
+     * 构造函数
+     * @param {number} x1 - 起点X
+     * @param {number} y1 - 起点Y
+     * @param {number} x2 - 终点X
+     * @param {number} y2 - 终点Y
+     */
+    constructor(x1, y1, x2, y2) {
+        this.x1 = x1;
+        this.y1 = y1;
+        this.x2 = x2;
+        this.y2 = y2;
+        this.life = 1;
+        this.decay = 0.05;
+    }
+
+    /**
+     * 更新轨迹透明度
+     * @returns {boolean} - 轨迹是否还可见
+     */
+    update() {
+        this.life -= this.decay;
+        return this.life > 0;
+    }
+
+    /**
+     * 绘制挥砍轨迹
+     * @param {CanvasRenderingContext2D} ctx - Canvas上下文
+     */
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.life;
+        ctx.strokeStyle = `rgba(255, 215, 0, ${this.life})`;
+        ctx.lineWidth = 8 * this.life;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(this.x1, this.y1);
+        ctx.lineTo(this.x2, this.y2);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+/**
+ * 更新游戏UI显示
+ */
+function updateUI() {
+    scoreEl.textContent = gameState.totalScore + gameState.stageScore;
+    stageEl.textContent = gameState.currentStage + 1;
+    const config = STAGE_CONFIGS[gameState.currentStage];
+    targetEl.textContent = `${gameState.stageScore}/${config.targetScore}`;
+    comboEl.textContent = gameState.combo;
+    livesEl.textContent = gameState.lives;
+}
+
+/**
+ * 显示连击文字特效
+ * @param {number} x - X坐标
+ * @param {number} y - Y坐标
+ * @param {string} text - 显示文字
+ */
+function showComboText(x, y, text) {
+    const el = document.createElement('div');
+    el.className = 'combo-text';
+    el.textContent = text;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    document.getElementById('game-container').appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+}
+
+/**
+ * 设置关卡背景图
+ * @param {string} imagePath - 背景图片路径
+ */
+function setBackground(imagePath) {
+    if (imagePath) {
+        backgroundLayer.style.backgroundImage = `url('${imagePath}')`;
+    } else {
+        backgroundLayer.style.backgroundImage = 'none';
+    }
+}
+
+/**
+ * 生成新怪兽
+ * 递归调用以持续生成
+ */
+const MAX_MONSTERS = 4;
+
+function spawnMonster() {
+    if (!gameState.isPlaying) return;
+    const config = STAGE_CONFIGS[gameState.currentStage];
+    
+    const currentCount = gameState.monsters.filter(m => m.alive).length;
+    
+    if (currentCount < MAX_MONSTERS) {
+        const maxPossible = MAX_MONSTERS - currentCount;
+        const desiredCount = config.monsters.spawnCount.min + Math.floor(Math.random() * (config.monsters.spawnCount.max - config.monsters.spawnCount.min + 1));
+        const count = Math.min(desiredCount, maxPossible);
+        
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                if (gameState.isPlaying) {
+                    gameState.monsters.push(new Monster(config));
+                }
+            }, i * 200);
+        }
+    }
+    
+    const interval = config.monsters.spawnInterval.min + Math.random() * (config.monsters.spawnInterval.max - config.monsters.spawnInterval.min);
+    setTimeout(spawnMonster, interval);
+}
+
+/**
+ * 检查是否完成当前关卡
+ */
+function checkStageComplete() {
+    const config = STAGE_CONFIGS[gameState.currentStage];
+    if (gameState.stageScore >= config.targetScore) {
+        gameState.isPlaying = false;
+        gameState.totalScore += gameState.stageScore;
+        
+        if (gameState.currentStage >= STAGE_CONFIGS.length - 1) {
+            showGameComplete();
+        } else {
+            showStageComplete();
+        }
+    }
+}
+
+/**
+ * 显示关卡完成界面
+ */
+function showStageComplete() {
+    completedStageEl.textContent = gameState.currentStage + 1;
+    stageScoreEl.textContent = gameState.stageScore;
+    stageCompleteScreen.classList.remove('hidden');
+}
+
+/**
+ * 显示游戏通关界面
+ */
+function showGameComplete() {
+    totalScoreEl.textContent = gameState.totalScore;
+    gameCompleteScreen.classList.remove('hidden');
+}
+
+/**
+ * 结束游戏（失败）
+ */
+function endGame() {
+    gameState.isPlaying = false;
+    reachedStageEl.textContent = gameState.currentStage + 1;
+    finalScoreEl.textContent = gameState.totalScore + gameState.stageScore;
+    gameOverScreen.classList.remove('hidden');
+}
+
+/**
+ * 处理挥砍动作检测和碰撞判定
+ * @param {number} x1 - 起点X
+ * @param {number} y1 - 起点Y
+ * @param {number} x2 - 终点X
+ * @param {number} y2 - 终点Y
+ */
+function processSlash(x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < 30) return;
+    
+    gameState.slashTrails.push(new SlashTrail(x1, y1, x2, y2));
+    
+    const steps = Math.ceil(distance / 20);
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const px = x1 + dx * t;
+        const py = y1 + dy * t;
+        
+        for (const monster of gameState.monsters) {
+            if (monster.checkHit(px, py)) {
+                monster.alive = false;
+                gameState.combo++;
+                const comboBonus = Math.floor(gameState.combo / 5);
+                const points = monster.points * (1 + comboBonus);
+                gameState.stageScore += points;
+                updateUI();
+                checkStageComplete();
+                
+                if (gameState.combo >= 3) {
+                    showComboText(monster.x, monster.y, `${gameState.combo}连击!`);
+                }
+                break;
+            }
+        }
+    }
+}
+
+/**
+ * MediaPipe Pose 结果回调函数
+ * 处理姿势检测结果
+ * @param {Object} results - MediaPipe检测结果
+ */
+function onResults(results) {
+    if (!gameState.isPlaying || !results.poseLandmarks) return;
+    
+    const landmarks = results.poseLandmarks;
+    const leftWrist = landmarks[15];
+    const rightWrist = landmarks[16];
+    
+    const lx = (1 - leftWrist.x) * canvas.width;
+    const ly = leftWrist.y * canvas.height;
+    const rx = (1 - rightWrist.x) * canvas.width;
+    const ry = rightWrist.y * canvas.height;
+    
+    if (gameState.lastLeftWrist) {
+        processSlash(gameState.lastLeftWrist.x, gameState.lastLeftWrist.y, lx, ly);
+    }
+    if (gameState.lastRightWrist) {
+        processSlash(gameState.lastRightWrist.x, gameState.lastRightWrist.y, rx, ry);
+    }
+    
+    gameState.lastLeftWrist = { x: lx, y: ly };
+    gameState.lastRightWrist = { x: rx, y: ry };
+}
+
+/**
+ * 游戏主循环
+ * 使用requestAnimationFrame实现流畅动画
+ */
+function gameLoop() {
+    if (!gameState.isPlaying) return;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    gameState.monsters = gameState.monsters.filter(monster => {
+        const alive = monster.update();
+        if (alive || monster.alive) {
+            monster.draw(ctx);
+        }
+        return alive;
+    });
+    
+    gameState.slashTrails = gameState.slashTrails.filter(trail => {
+        const alive = trail.update();
+        if (alive) {
+            trail.draw(ctx);
+        }
+        return alive;
+    });
+    
+    requestAnimationFrame(gameLoop);
+}
+
+/**
+ * 初始化指定关卡
+ * @param {number} stageIndex - 关卡索引
+ */
+function initStage(stageIndex) {
+    const config = STAGE_CONFIGS[stageIndex];
+    gameState.currentStage = stageIndex;
+    gameState.stageScore = 0;
+    gameState.combo = 0;
+    gameState.lives = config.lives;
+    gameState.monsters = [];
+    gameState.slashTrails = [];
+    gameState.lastLeftWrist = null;
+    gameState.lastRightWrist = null;
+    
+    setBackground(config.background);
+    updateUI();
+}
+
+/**
+ * 开始新游戏
+ */
+async function startGame() {
+    await preloadImages();
+    gameState.totalScore = 0;
+    initStage(0);
+    gameState.isPlaying = true;
+    startScreen.classList.add('hidden');
+    stageCompleteScreen.classList.add('hidden');
+    gameCompleteScreen.classList.add('hidden');
+    gameOverScreen.classList.add('hidden');
+    
+    spawnMonster();
+    gameLoop();
+}
+
+/**
+ * 进入下一关
+ */
+function nextStage() {
+    initStage(gameState.currentStage + 1);
+    gameState.isPlaying = true;
+    stageCompleteScreen.classList.add('hidden');
+    
+    spawnMonster();
+    gameLoop();
+}
+
+/**
+ * 初始化游戏
+ * 设置摄像头、MediaPipe和事件监听
+ */
+async function init() {
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { width: 1280, height: 720 } 
+    });
+    video.srcObject = stream;
+    
+    const pose = new Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+    });
+    
+    let frameCount = 0;
+    
+    pose.setOptions({
+        modelComplexity: 0,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        smoothSegmentation: true,
+        minDetectionConfidence: 0.6,
+        minTrackingConfidence: 0.6
+    });
+    
+    pose.onResults(onResults);
+    
+    const camera = new Camera(video, {
+        onFrame: async () => {
+            frameCount++;
+            if (frameCount % 3 === 0) {
+                await pose.send({ image: video });
+            }
+        },
+        width: 640,
+        height: 360
+    });
+    
+    camera.start();
+    
+    startBtn.addEventListener('click', startGame);
+    nextStageBtn.addEventListener('click', nextStage);
+    playAgainBtn.addEventListener('click', startGame);
+    restartBtn.addEventListener('click', startGame);
+}
+
+// 启动游戏
+init();

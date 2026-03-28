@@ -1,0 +1,11 @@
+{
+  "name": "mori-hero-game",
+  "private": true,
+  "scripts": {
+    "start": "serve",
+    "serve": "serve"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}

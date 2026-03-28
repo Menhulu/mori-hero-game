@@ -3,65 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>怪兽砍杀游戏</title>
+    <title>毛利杀海怪</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
-        <div id="background-layer"></div>
+        <div id="background-stack" class="background-stack">
+            <!-- 仅作采集；画面由下方 canvas 合成（海洋 + 抠像人物） -->
+            <video id="camera-feed" autoplay playsinline muted></video>
+            <canvas id="bg-composite" aria-hidden="true"></canvas>
+        </div>
         <div id="ui-overlay">
             <div id="score-board">
                 <div class="score-item">
-                    <span class="label">得分:</span>
+                    <span class="label">得分</span>
                     <span id="score" class="value">0</span>
                 </div>
                 <div class="score-item">
-                    <span class="label">关卡:</span>
+                    <span class="label">关卡</span>
                     <span id="stage" class="value">1</span>
                 </div>
                 <div class="score-item">
-                    <span class="label">目标:</span>
-                    <span id="target" class="value">0/50</span>
+                    <span class="label">目标</span>
+                    <span id="target" class="value">0/120</span>
                 </div>
                 <div class="score-item">
-                    <span class="label">连击:</span>
+                    <span class="label">连击</span>
                     <span id="combo" class="value">0</span>
                 </div>
                 <div class="score-item">
-                    <span class="label">生命值:</span>
+                    <span class="label">生命</span>
                     <span id="lives" class="value">5</span>
                 </div>
             </div>
         </div>
-        <canvas id="game-canvas"></canvas>
-        <video id="camera-feed" autoplay playsinline muted></video>
+        <canvas id="game-canvas" aria-label="游戏画面"></canvas>
         <div id="start-screen">
-            <h1>怪兽砍杀游戏</h1>
-            <p>挥动手臂来砍杀小怪兽！</p>
-            <button id="start-btn">开始游戏</button>
+            <h1>毛利杀海怪</h1>
+            <p>请先<strong>允许使用摄像头</strong>：使用人体分割将您「抠出」叠在海洋<strong>虚拟背景</strong>上（类似视频会议），真实环境不会铺满画面。</p>
+            <p>面向摄像头站立，挥动手臂「切开」小海怪，锻炼上肢活动度。</p>
+            <p id="camera-status" class="hint" role="status">正在请求摄像头权限…</p>
+            <button type="button" id="start-btn" disabled>开始游戏</button>
         </div>
         <div id="stage-complete-screen" class="hidden">
-            <h1>关卡完成！</h1>
+            <h1>关卡完成</h1>
             <p>第 <span id="completed-stage">1</span> 关通过</p>
-            <p>本关得分: <span id="stage-score">0</span></p>
-            <button id="next-stage-btn">进入下一关</button>
+            <p>本关得分：<span id="stage-score">0</span></p>
+            <button type="button" id="next-stage-btn">下一关</button>
         </div>
         <div id="game-complete-screen" class="hidden">
-            <h1>🎉 恭喜通关！</h1>
-            <p>总得分: <span id="total-score">0</span></p>
-            <button id="play-again-btn">再玩一次</button>
+            <h1>全部通关</h1>
+            <p>总得分：<span id="total-score">0</span></p>
+            <button type="button" id="play-again-btn">再玩一次</button>
         </div>
         <div id="game-over-screen" class="hidden">
             <h1>游戏结束</h1>
             <p>到达第 <span id="reached-stage">1</span> 关</p>
-            <p>最终得分: <span id="final-score">0</span></p>
-            <button id="restart-btn">重新开始</button>
+            <p>最终得分：<span id="final-score">0</span></p>
+            <button type="button" id="restart-btn">重新开始</button>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
