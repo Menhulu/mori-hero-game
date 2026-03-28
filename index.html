@@ -14,6 +14,7 @@
             <canvas id="bg-composite" aria-hidden="true"></canvas>
         </div>
         <div id="ui-overlay">
+            <div id="grip-hint" class="grip-hint hidden" role="status">握持提示：握拳或虚握，小臂打直朝前，武器随小臂匹配大小</div>
             <div id="score-board">
                 <div class="score-item">
                     <span class="label">得分</span>
@@ -43,6 +44,13 @@
             <p>请先<strong>允许使用摄像头</strong>：使用人体分割将您「抠出」叠在海洋<strong>虚拟背景</strong>上（类似视频会议），真实环境不会铺满画面。</p>
             <p>面向摄像头站立，挥动手臂「切开」小海怪，锻炼上肢活动度。</p>
             <p id="camera-status" class="hint" role="status">正在请求摄像头权限…</p>
+            <div id="weapon-picker" class="weapon-picker">
+                <p class="weapon-picker-title">选择武器</p>
+                <div id="weapon-grid" class="weapon-grid" role="listbox" aria-label="武器选择"></div>
+                <p class="weapon-picker-hint">
+                    建议<strong>握拳或虚握</strong>、小臂朝前伸出，像真的握住握把；武器会按<strong>小臂长度自动放大缩小</strong>，请保持手臂在画面内。
+                </p>
+            </div>
             <button type="button" id="start-btn" disabled>开始游戏</button>
         </div>
         <div id="stage-complete-screen" class="hidden">
