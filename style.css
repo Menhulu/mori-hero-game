@@ -5,7 +5,7 @@
 }
 
 body {
-    font-family: system-ui, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-family: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     overflow: hidden;
     background: #0d1b2a;
 }
@@ -17,7 +17,7 @@ body {
     overflow: hidden;
 }
 
-/* 虚拟背景：canvas 绘制海洋 + 人体抠像；video 仅采集不参与展示 */
+/* Virtual background: canvas composites ocean + person; video is capture-only */
 .background-stack {
     position: absolute;
     inset: 0;
@@ -231,6 +231,19 @@ body {
     height: 72px;
     object-fit: contain;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+    pointer-events: none;
+}
+
+.weapon-none-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    font-size: 36px;
+    font-weight: 300;
+    color: rgba(202, 240, 248, 0.55);
+    user-select: none;
     pointer-events: none;
 }
 

@@ -1,74 +1,75 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en-NZ">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>毛利杀海怪</title>
+    <title>Mori Sea Hunt — Arm Exercise Game</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
         <div id="background-stack" class="background-stack">
-            <!-- 仅作采集；画面由下方 canvas 合成（海洋 + 抠像人物） -->
             <video id="camera-feed" autoplay playsinline muted></video>
             <canvas id="bg-composite" aria-hidden="true"></canvas>
         </div>
         <div id="ui-overlay">
-            <div id="grip-hint" class="grip-hint hidden" role="status">握持提示：握拳或虚握，小臂打直朝前，武器随小臂匹配大小</div>
+            <div id="grip-hint" class="grip-hint hidden" role="status">
+                Grip tip: make a light fist or loose grip, keep your forearm toward the camera. Weapon size matches your arm length.
+            </div>
             <div id="score-board">
                 <div class="score-item">
-                    <span class="label">得分</span>
+                    <span class="label">Score</span>
                     <span id="score" class="value">0</span>
                 </div>
                 <div class="score-item">
-                    <span class="label">关卡</span>
+                    <span class="label">Stage</span>
                     <span id="stage" class="value">1</span>
                 </div>
                 <div class="score-item">
-                    <span class="label">目标</span>
+                    <span class="label">Target</span>
                     <span id="target" class="value">0/120</span>
                 </div>
                 <div class="score-item">
-                    <span class="label">连击</span>
+                    <span class="label">Combo</span>
                     <span id="combo" class="value">0</span>
                 </div>
                 <div class="score-item">
-                    <span class="label">生命</span>
+                    <span class="label">Lives</span>
                     <span id="lives" class="value">5</span>
                 </div>
             </div>
         </div>
-        <canvas id="game-canvas" aria-label="游戏画面"></canvas>
+        <canvas id="game-canvas" aria-label="Game playfield"></canvas>
         <div id="start-screen">
-            <h1>毛利杀海怪</h1>
-            <p>请先<strong>允许使用摄像头</strong>：使用人体分割将您「抠出」叠在海洋<strong>虚拟背景</strong>上（类似视频会议），真实环境不会铺满画面。</p>
-            <p>面向摄像头站立，挥动手臂「切开」小海怪，锻炼上肢活动度。</p>
-            <p id="camera-status" class="hint" role="status">正在请求摄像头权限…</p>
+            <h1>Mori Sea Hunt</h1>
+            <p>Please <strong>allow camera access</strong>. You will appear on an <strong>ocean virtual background</strong> (like a video call). Your room is not shown full-screen.</p>
+            <p>Stand facing the camera and swing your arms to slice sea creatures — gentle upper-body exercise.</p>
+            <p id="camera-status" class="hint" role="status">Requesting camera permission…</p>
             <div id="weapon-picker" class="weapon-picker">
-                <p class="weapon-picker-title">选择武器</p>
-                <div id="weapon-grid" class="weapon-grid" role="listbox" aria-label="武器选择"></div>
+                <p class="weapon-picker-title">Weapon (optional)</p>
+                <div id="weapon-grid" class="weapon-grid" role="listbox" aria-label="Weapon selection"></div>
                 <p class="weapon-picker-hint">
-                    建议<strong>握拳或虚握</strong>、小臂朝前伸出，像真的握住握把；武器会按<strong>小臂长度自动放大缩小</strong>，请保持手臂在画面内。
+                    If you pick a weapon, hold a light fist so the grip lines up. The weapon scales with your forearm. Keep your arms in view. You can also choose <strong>No weapon</strong> and play with slash trails only.
                 </p>
             </div>
-            <button type="button" id="start-btn" disabled>开始游戏</button>
+            <button type="button" id="start-btn" disabled>Start game</button>
         </div>
         <div id="stage-complete-screen" class="hidden">
-            <h1>关卡完成</h1>
-            <p>第 <span id="completed-stage">1</span> 关通过</p>
-            <p>本关得分：<span id="stage-score">0</span></p>
-            <button type="button" id="next-stage-btn">下一关</button>
+            <h1>Stage complete</h1>
+            <p>You finished stage <span id="completed-stage">1</span>.</p>
+            <p>Stage score: <span id="stage-score">0</span></p>
+            <button type="button" id="next-stage-btn">Next stage</button>
         </div>
         <div id="game-complete-screen" class="hidden">
-            <h1>全部通关</h1>
-            <p>总得分：<span id="total-score">0</span></p>
-            <button type="button" id="play-again-btn">再玩一次</button>
+            <h1>You cleared all stages</h1>
+            <p>Total score: <span id="total-score">0</span></p>
+            <button type="button" id="play-again-btn">Play again</button>
         </div>
         <div id="game-over-screen" class="hidden">
-            <h1>游戏结束</h1>
-            <p>到达第 <span id="reached-stage">1</span> 关</p>
-            <p>最终得分：<span id="final-score">0</span></p>
-            <button type="button" id="restart-btn">重新开始</button>
+            <h1>Game over</h1>
+            <p>You reached stage <span id="reached-stage">1</span>.</p>
+            <p>Final score: <span id="final-score">0</span></p>
+            <button type="button" id="restart-btn">Restart</button>
         </div>
     </div>
 

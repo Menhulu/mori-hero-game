@@ -1,12 +1,12 @@
 /**
- * 毛利杀海怪 — 上肢活动互动游戏
- * MediaPipe Pose：人体分割 + 手腕轨迹，海洋为虚拟背景（类似视频会议）
+ * Mori Sea Hunt — upper-body movement game
+ * MediaPipe Pose: segmentation + wrist trails; ocean as virtual background (video-call style)
  */
 
 const STAGE_CONFIGS = [
     {
         id: 1,
-        name: "浅海热身",
+        name: "Shallow warm-up",
         targetScore: 120,
         lives: 6,
         background: "img/background01.png",
@@ -22,7 +22,7 @@ const STAGE_CONFIGS = [
     },
     {
         id: 2,
-        name: "浪花区",
+        name: "Surf zone",
         targetScore: 220,
         lives: 5,
         background: "img/background02.png",
@@ -38,7 +38,7 @@ const STAGE_CONFIGS = [
     },
     {
         id: 3,
-        name: "深海激流",
+        name: "Deep current",
         targetScore: 380,
         lives: 5,
         background: "img/background03.png",
@@ -54,7 +54,7 @@ const STAGE_CONFIGS = [
     },
     {
         id: 4,
-        name: "终极海渊",
+        name: "Final abyss",
         targetScore: 520,
         lives: 4,
         background: "img/background01.png",
@@ -72,7 +72,7 @@ const STAGE_CONFIGS = [
 
 const MIN_SLASH_LEN = 26;
 const WRIST_HISTORY_MAX = 18;
-/** 指数平滑：越大越跟手，越小越顺滑 */
+/** Exponential smoothing: higher = snappier, lower = smoother */
 const WRIST_SMOOTH_ALPHA = 0.32;
 const HIT_RADIUS_EXTRA = 58;
 const LANDMARK_MIN_VIS = 0.35;
@@ -88,31 +88,40 @@ const monsterImages = [
     "img/sea-monster/turtle.png"
 ];
 
-/** 武器图与握持参数：anchor 为握把末端在图上的比例（偏下=更接近拳心一侧） */
+/**
+ * Weapon art and grip parameters:
+ * bladeForwardIdle: fixed blade tilt (rad) toward strike direction
+ * bladeSwingFactor: extra alignment to instant velocity (0–1)
+ */
 const WEAPONS = [
+    { noWeapon: true, label: "None" },
     {
         path: "img/weapon/knif.png",
-        label: "短刀",
+        label: "Knife",
         angleOffset: 1.14,
         anchorX: 0.5,
         anchorY: 0.84,
-        scale: 1
+        scale: 1,
+        bladeForwardIdle: 0.11,
+        bladeSwingFactor: 0.44
     },
     {
         path: "img/weapon/axe.png",
-        label: "战斧",
+        label: "Axe",
         angleOffset: 0.98,
         anchorX: 0.5,
         anchorY: 0.86,
-        scale: 1.02
+        scale: 1.02,
+        bladeForwardIdle: 0.125,
+        bladeSwingFactor: 0.4
     }
 ];
 
-/** 武器显示宽度 ≈ 小臂长度(像素) × 该系数，再限制在 min～max，避免过小或出屏 */
+/** Weapon width ≈ forearm length (px) × ratio, clamped min–max */
 const WEAPON_FOREARM_RATIO = 0.96;
 const WEAPON_MIN_WIDTH_PX = 178;
 
-/** 与 monsterImages 下标一致，用于习性动画 */
+/** Matches monsterImages indices for behaviour animation */
 const SPECIES = {
     BLOWFISH: 0,
     CRAB: 1,
@@ -185,7 +194,7 @@ function resizeCanvas() {
 }
 
 /**
- * object-fit: cover 绘制（用于海洋图、人物层）
+ * object-fit: cover draw (ocean image, person layer)
  */
 function drawImageCover(ctx2, src, cw, ch) {
     const iw = src.naturalWidth || src.videoWidth || src.width;
@@ -212,7 +221,7 @@ function drawImageCover(ctx2, src, cw, ch) {
 }
 
 /**
- * 海洋虚拟背景 + 仅绘制抠像后的人物（镜像与游戏坐标一致）
+ * Ocean virtual background + segmented person only (mirrored to match game coords)
  */
 function drawVirtualBackground(results) {
     const w = bgCanvas.width;
@@ -274,6 +283,10 @@ async function preloadMonsterImages() {
 
 async function preloadWeaponImages() {
     for (const w of WEAPONS) {
+        if (w.noWeapon) {
+            loadedWeapons.push(null);
+            continue;
+        }
         const img = new Image();
         img.src = w.path;
         await new Promise((resolve) => {
@@ -431,7 +444,7 @@ class Monster {
         return 0.2 + 0.8 * (1 - Math.pow(1 - t, 3));
     }
 
-    /** 河豚鼓气缩放，其余为 1 */
+    /** Blowfish puff scale; others stay 1 */
     getSpeciesScale() {
         if (this.monsterTypeIndex === SPECIES.BLOWFISH) {
             return 0.78 + 0.22 * Math.sin(this.spawnAge * this.puffSpeed + this.puffPhase);
@@ -540,7 +553,7 @@ class Monster {
             ctx2.font = `${Math.max(20, half * 0.45)}px sans-serif`;
             ctx2.textAlign = "center";
             ctx2.textBaseline = "middle";
-            ctx2.fillText("海怪", 0, 0);
+            ctx2.fillText("Creature", 0, 0);
         }
         ctx2.restore();
     }
@@ -555,7 +568,7 @@ class Monster {
 }
 
 /**
- * 刀光：直线段或三次贝塞尔（Catmull-Rom 平滑段，过点更顺）
+ * Slash trail: line segments or cubic Bezier (Catmull-Rom smoothed)
  */
 class SlashTrail {
     constructor(kind, hue, payload) {
@@ -787,6 +800,15 @@ function checkStageComplete() {
 function showGripHintBar() {
     const el = document.getElementById("grip-hint");
     if (!el) return;
+    const wcfg = WEAPONS[gameState.selectedWeaponIndex];
+    if (wcfg?.noWeapon) {
+        el.classList.add("hidden");
+        if (gameState.gripHintTimer) {
+            clearTimeout(gameState.gripHintTimer);
+            gameState.gripHintTimer = null;
+        }
+        return;
+    }
     if (gameState.gripHintTimer) clearTimeout(gameState.gripHintTimer);
     el.classList.remove("hidden");
     gameState.gripHintTimer = setTimeout(() => {
@@ -838,7 +860,7 @@ function cubicBezierPoint(b0, b1, b2, b3, t) {
 }
 
 /**
- * 均匀 Catmull-Rom：曲线从 P1 到 P2，四结点为 P0,P1,P2,P3（P0/P3 可为外推点）
+ * Uniform Catmull-Rom: segment from P1 to P2 with control points P0–P3 (P0/P3 may be extrapolated)
  */
 function catmullRomSegmentToBezier(p0, p1, p2, p3) {
     return {
@@ -879,7 +901,7 @@ function tryHitMonsterAt(px, py, hitIds) {
             updateUI();
             checkStageComplete();
             if (gameState.combo >= 3) {
-                showComboText(monster.x, monster.y, `${gameState.combo} 连击`);
+                showComboText(monster.x, monster.y, `${gameState.combo} combo`);
             }
         }
     }
@@ -909,7 +931,7 @@ function sampleHitsAlongCubic(b0, b1, b2, b3) {
 }
 
 /**
- * 指数平滑 + Catmull-Rom 三次曲线刀光；2 点仍为直线
+ * Exponential smoothing + Catmull-Rom cubic slash; two points stay a line
  */
 function processWristSlash(history, x, y, hue, smoothRef) {
     let px = x;
@@ -960,23 +982,97 @@ function smoothAngleRad(prev, next, t) {
     return prev + d * t;
 }
 
-function smoothWeaponPose(prev, raw) {
-    if (!raw) return null;
-    if (!prev) {
-        return { wx: raw.wx, wy: raw.wy, angle: raw.angle, armLen: raw.armLen };
-    }
-    const k = 0.44;
-    const al = prev.armLen * 0.52 + raw.armLen * 0.48;
-    return {
-        wx: prev.wx + (raw.wx - prev.wx) * k,
-        wy: prev.wy + (raw.wy - prev.wy) * k,
-        angle: smoothAngleRad(prev.angle, raw.angle, 0.38),
-        armLen: al
-    };
+function unwrapAngleDiff(a, b) {
+    let d = a - b;
+    while (d > Math.PI) d -= 2 * Math.PI;
+    while (d < -Math.PI) d += 2 * Math.PI;
+    return d;
+}
+
+function lerpAngle(a, b, t) {
+    return a + unwrapAngleDiff(b, a) * t;
 }
 
 /**
- * 肩-肘-腕 定小臂方向；握点沿小臂伸向「拳心/掌心」一侧，并略向拇指侧偏移，便于握拳姿势对齐
+ * Weapon angle: blends forearm direction on screen with wrist velocity as attack direction.
+ * When the forearm is nearly horizontal, blade axis tends perpendicular to the forearm.
+ */
+function computeWeaponAngle(ex, ey, wx, wy, vx, vy, isLeft) {
+    const fx = wx - ex;
+    const fy = wy - ey;
+    const len = Math.hypot(fx, fy) || 1;
+    if (len < 28) {
+        return Math.atan2(fy, fx);
+    }
+
+    const forearmAngle = Math.atan2(fy, fx);
+    const horizontal = Math.abs(fx) > Math.abs(fy) * 1.08;
+    const sp = Math.hypot(vx, vy);
+    const attackAngle = Math.atan2(vy, vx);
+
+    let base;
+
+    if (horizontal) {
+        const alt1 = forearmAngle + Math.PI / 2;
+        const alt2 = forearmAngle - Math.PI / 2;
+        const screenUp = -Math.PI / 2;
+
+        if (sp > 16) {
+            const d1 = Math.abs(unwrapAngleDiff(attackAngle, alt1));
+            const d2 = Math.abs(unwrapAngleDiff(attackAngle, alt2));
+            base = d1 < d2 ? alt1 : alt2;
+            base = lerpAngle(base, attackAngle, Math.min(0.62, sp / 165));
+        } else {
+            const u1 = Math.abs(unwrapAngleDiff(alt1, screenUp));
+            const u2 = Math.abs(unwrapAngleDiff(alt2, screenUp));
+            let pickUp = u1 < u2 ? alt1 : alt2;
+            let pickDn = u1 < u2 ? alt2 : alt1;
+            base = pickUp;
+            if (isLeft) {
+                base = pickDn;
+            }
+        }
+    } else {
+        base = forearmAngle;
+        if (sp > 18) {
+            base = lerpAngle(base, attackAngle, Math.min(0.55, sp / 190));
+        }
+    }
+
+    return base;
+}
+
+function smoothWeaponPose(prev, raw) {
+    if (!raw) return null;
+    if (!prev) {
+        const angle = computeWeaponAngle(raw.ex, raw.ey, raw.wx, raw.wy, 0, 0, raw.isLeft);
+        return {
+            wx: raw.wx,
+            wy: raw.wy,
+            angle,
+            armLen: raw.armLen,
+            ex: raw.ex,
+            ey: raw.ey,
+            isLeft: raw.isLeft,
+            vx: 0,
+            vy: 0
+        };
+    }
+    const k = 0.44;
+    const wx = prev.wx + (raw.wx - prev.wx) * k;
+    const wy = prev.wy + (raw.wy - prev.wy) * k;
+    const rvx = wx - prev.wx;
+    const rvy = wy - prev.wy;
+    const vx = prev.vx * 0.52 + rvx * 0.48;
+    const vy = prev.vy * 0.52 + rvy * 0.48;
+    const al = prev.armLen * 0.52 + raw.armLen * 0.48;
+    let angle = computeWeaponAngle(raw.ex, raw.ey, wx, wy, vx, vy, raw.isLeft);
+    angle = smoothAngleRad(prev.angle, angle, 0.4);
+    return { wx, wy, angle, armLen: al, ex: raw.ex, ey: raw.ey, isLeft: raw.isLeft, vx, vy };
+}
+
+/**
+ * Shoulder–elbow–wrist defines forearm; grip point shifts toward palm side and slightly thumb-ward for fist alignment
  */
 function updateWeaponHandPose(landmarks) {
     const L = landmarks;
@@ -997,7 +1093,6 @@ function updateWeaponHandPose(landmarks) {
         const armLen = Math.hypot(dx, dy) || 1;
         const ux = dx / armLen;
         const uy = dy / armLen;
-        const armAngle = Math.atan2(dy, dx);
         const along = armLen * 0.168;
         const thumb = armLen * 0.045;
         const perpX = -uy;
@@ -1005,11 +1100,33 @@ function updateWeaponHandPose(landmarks) {
         const thumbSign = isLeft ? -1 : 1;
         const gx = wx + ux * along + perpX * thumb * thumbSign;
         const gy = wy + uy * along + perpY * thumb * thumbSign;
-        return { wx: gx, wy: gy, angle: armAngle, armLen };
+        return { wx: gx, wy: gy, armLen, ex, ey, isLeft };
     };
 
     gameState.weaponPoseSmooth.left = smoothWeaponPose(gameState.weaponPoseSmooth.left, build(11, 13, 15, true));
     gameState.weaponPoseSmooth.right = smoothWeaponPose(gameState.weaponPoseSmooth.right, build(12, 14, 16, false));
+}
+
+/**
+ * Blade tilt: idle lean toward strike; swing adds blend toward instant velocity
+ */
+function weaponBladeTiltAdditive(wcfg, pose, flip) {
+    const idle = wcfg.bladeForwardIdle ?? 0.1;
+    const swingK = wcfg.bladeSwingFactor ?? 0.42;
+    const sid = flip ? -1 : 1;
+    let t = idle * sid;
+
+    const vx = pose.vx || 0;
+    const vy = pose.vy || 0;
+    const sp = Math.hypot(vx, vy);
+    if (sp < 5) return t;
+
+    const baseAng = pose.angle + wcfg.angleOffset;
+    const vAng = Math.atan2(vy, vx);
+    const d = unwrapAngleDiff(vAng, baseAng);
+    const w = swingK * Math.min(0.58, sp / 130);
+    const swing = Math.max(-0.52, Math.min(0.52, d * w));
+    return t + swing;
 }
 
 function weaponDisplayWidthPx(armLen) {
@@ -1021,9 +1138,10 @@ function weaponDisplayWidthPx(armLen) {
 }
 
 function drawHeldWeapons(ctx2) {
-    const img = loadedWeapons[gameState.selectedWeaponIndex];
     const wcfg = WEAPONS[gameState.selectedWeaponIndex];
-    if (!img || !img.complete || !img.naturalWidth || !wcfg) return;
+    if (!wcfg || wcfg.noWeapon) return;
+    const img = loadedWeapons[gameState.selectedWeaponIndex];
+    if (!img || !img.complete || !img.naturalWidth) return;
 
     const drawOne = (pose, flip) => {
         if (!pose) return;
@@ -1037,7 +1155,8 @@ function drawHeldWeapons(ctx2) {
 
         ctx2.save();
         ctx2.translate(wx, wy);
-        ctx2.rotate(angle + wcfg.angleOffset);
+        const tilt = weaponBladeTiltAdditive(wcfg, pose, flip);
+        ctx2.rotate(angle + wcfg.angleOffset + tilt);
         if (flip) ctx2.scale(-1, 1);
 
         ctx2.fillStyle = "rgba(0,0,0,0.2)";
@@ -1061,7 +1180,12 @@ function onResults(results) {
     drawVirtualBackground(results);
 
     if (results.poseLandmarks && gameState.isPlaying) {
-        updateWeaponHandPose(results.poseLandmarks);
+        const wcfg = WEAPONS[gameState.selectedWeaponIndex];
+        if (wcfg && !wcfg.noWeapon) {
+            updateWeaponHandPose(results.poseLandmarks);
+        } else {
+            gameState.weaponPoseSmooth = { left: null, right: null };
+        }
     }
 
     if (!gameState.isPlaying || !results.poseLandmarks) return;
@@ -1176,7 +1300,7 @@ function enableStartAfterCamera() {
     const cameraStatusEl = document.getElementById("camera-status");
     if (cameraStatusEl) {
         cameraStatusEl.textContent =
-            "摄像头已开启，您将以虚拟海洋为背景显示（人体抠像），可开始游戏。";
+            "Camera is on. You will see yourself on a virtual ocean background (cut-out). You can start the game.";
     }
     startBtn.disabled = false;
 }
@@ -1192,7 +1316,9 @@ function buildWeaponPicker() {
         btn.setAttribute("role", "option");
         btn.setAttribute("aria-selected", i === gameState.selectedWeaponIndex ? "true" : "false");
         btn.dataset.index = String(i);
-        btn.innerHTML = `<img src="${w.path}" alt="" /><span>${w.label}</span>`;
+        btn.innerHTML = w.noWeapon
+            ? `<span class="weapon-none-placeholder" aria-hidden="true">—</span><span>${w.label}</span>`
+            : `<img src="${w.path}" alt="" /><span>${w.label}</span>`;
         btn.addEventListener("click", () => {
             gameState.selectedWeaponIndex = i;
             grid.querySelectorAll(".weapon-card").forEach((b, j) => {
@@ -1263,7 +1389,10 @@ init().catch((err) => {
     console.error(err);
     const cameraStatusEl = document.getElementById("camera-status");
     if (cameraStatusEl) {
-        cameraStatusEl.textContent = "无法打开摄像头，请在浏览器设置中允许摄像头后刷新页面。";
+        cameraStatusEl.textContent =
+            "Could not open the camera. Allow camera access in your browser settings, then refresh the page.";
     }
-    alert("无法打开摄像头或加载姿态模型，请检查浏览器权限与网络（需加载 MediaPipe 脚本）。");
+    alert(
+        "Could not open the camera or load the pose model. Check camera permission and your network (MediaPipe scripts load from the web)."
+    );
 });
