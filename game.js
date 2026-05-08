@@ -79,26 +79,26 @@ const STAGE_STORIES = [
     {
         stage: "Stage 1",
         title: "Shallow Waters",
-        desc: "The sea stirs. Small creatures circle the reef. Raise your arms, warrior — protect your people from the first wave!",
-        img: "img/story-card/1-stay alert.png"
+        desc: "The sea stirs gently. Take a deep breath, move your arms slowly and enjoy the calm. Every swing protects your people!",
+        img: "img/story-card/1-Relaxed Exploration.png"
     },
     {
         stage: "Stage 2",
         title: "The Surf Zone",
-        desc: "The ocean churns. Faster creatures pour through the surf. Your people need you — strike before they reach the shore!",
-        img: ""
+        desc: "The ocean picks up pace. Keep moving — your steady arms are growing stronger with every strike!",
+        img: "img/story-card/2-Steady Growth.png"
     },
     {
         stage: "Stage 3",
         title: "Deep Current",
-        desc: "The deep current pulls monsters up from the dark. They are swift and relentless. Stand firm, champion of Tangaroa!",
-        img: ""
+        desc: "Dark currents rise from below. Focus your mind and your body — you are the champion of Tangaroa!",
+        img: "img/story-card/3-Focused Challenge.png"
     },
     {
         stage: "Stage 4",
         title: "The Final Abyss",
-        desc: "The sea roars with its fiercest guardians. Only the bravest warrior can protect the people from the abyss. Kia kaha!",
-        img: ""
+        desc: "Te Wheke-a-Muturangi stirs in the deep — the same beast Kupe defeated long ago. Kia kaha! Strike with all your strength!",
+        img: "img/story-card/4-Final Strike.png"
     }
 ];
 
@@ -1411,6 +1411,9 @@ function showGameComplete() {
     stopAmbience();
     playStageCompleteSound();
     totalScoreEl.textContent = gameState.totalScore;
+    gameCompleteScreen.style.backgroundImage = "url('img/story-card/5-Win.png')";
+    gameCompleteScreen.style.backgroundSize = "cover";
+    gameCompleteScreen.style.backgroundPosition = "center";
     gameCompleteScreen.classList.remove("hidden");
 }
 
