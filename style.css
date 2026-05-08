@@ -199,6 +199,22 @@ body {
     text-shadow: 0 0 24px rgba(142, 202, 230, 0.45);
 }
 
+#game-complete-screen {
+    background-size: cover;
+    background-position: center top;
+}
+#game-complete-screen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+        rgba(2, 12, 27, 0.30) 0%,
+        rgba(2, 12, 27, 0.70) 55%,
+        rgba(2, 12, 27, 0.92) 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+#game-complete-screen > * { position: relative; z-index: 1; }
 #game-complete-screen h1 {
     text-shadow: 0 0 28px rgba(255, 209, 102, 0.5);
 }
