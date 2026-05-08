@@ -146,7 +146,7 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 10;
-    padding: 24px;
+    padding: clamp(28px, 6vw, 56px);
     text-align: center;
 }
 
@@ -156,8 +156,8 @@ body {
 
 #start-screen h1, #game-over-screen h1, #stage-complete-screen h1, #game-complete-screen h1 {
     color: #fff;
-    font-size: clamp(28px, 6vw, 44px);
-    margin-bottom: 16px;
+    font-size: clamp(40px, 7.2vw, 64px);
+    margin-bottom: 20px;
     text-shadow: 0 0 24px rgba(142, 202, 230, 0.45);
 }
 
@@ -167,43 +167,43 @@ body {
 
 #start-screen p, #game-over-screen p, #stage-complete-screen p, #game-complete-screen p {
     color: #caf0f8;
-    font-size: clamp(15px, 3.5vw, 18px);
-    margin-bottom: 10px;
-    max-width: 36em;
-    line-height: 1.55;
+    font-size: clamp(22px, 3.6vw, 32px);
+    margin-bottom: 14px;
+    max-width: 32em;
+    line-height: 1.5;
 }
 
 #start-screen .hint {
     color: #8ecae6;
-    font-size: clamp(13px, 3vw, 15px);
-    margin-bottom: 16px;
+    font-size: clamp(20px, 3.2vw, 28px);
+    margin-bottom: 24px;
 }
 
 .weapon-picker {
-    margin: 12px 0 20px;
-    max-width: min(420px, 100%);
+    margin: 18px 0 24px;
+    max-width: min(820px, 100%);
 }
 
 .weapon-picker-title {
     color: #8ecae6 !important;
-    font-size: clamp(14px, 3.2vw, 16px) !important;
-    margin-bottom: 12px !important;
+    font-size: clamp(24px, 3.3vw, 34px) !important;
+    margin-bottom: 16px !important;
     font-weight: 600;
     letter-spacing: 0.06em;
 }
 
 .weapon-picker-hint {
     color: #6c8a9a !important;
-    font-size: clamp(11px, 2.6vw, 13px) !important;
-    margin-top: 12px !important;
+    font-size: clamp(18px, 2.8vw, 24px) !important;
+    margin-top: 14px !important;
     margin-bottom: 0 !important;
-    line-height: 1.4 !important;
+    line-height: 1.5 !important;
 }
 
 .weapon-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 18px;
     justify-content: center;
     align-items: stretch;
 }
@@ -212,23 +212,23 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    width: 130px;
-    padding: 12px 10px;
+    gap: 10px;
+    width: 168px;
+    padding: 16px 12px;
     border: 2px solid rgba(142, 202, 230, 0.25);
     border-radius: 14px;
     background: rgba(2, 48, 71, 0.45);
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s, transform 0.15s;
     color: #caf0f8;
-    font-size: 15px;
+    font-size: 22px;
     font-weight: 600;
     pointer-events: auto;
 }
 
 .weapon-card img {
-    width: 72px;
-    height: 72px;
+    width: 88px;
+    height: 88px;
     object-fit: contain;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
     pointer-events: none;
@@ -238,9 +238,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 72px;
-    height: 72px;
-    font-size: 36px;
+    width: 88px;
+    height: 88px;
+    font-size: 48px;
     font-weight: 300;
     color: rgba(202, 240, 248, 0.55);
     user-select: none;
@@ -264,8 +264,8 @@ body {
 }
 
 #start-btn, #restart-btn, #next-stage-btn, #play-again-btn {
-    padding: 14px 40px;
-    font-size: clamp(17px, 3.5vw, 22px);
+    padding: 18px 56px;
+    font-size: clamp(24px, 3.8vw, 34px);
     font-weight: 600;
     background: linear-gradient(135deg, #219ebc 0%, #023047 100%);
     color: #fff;

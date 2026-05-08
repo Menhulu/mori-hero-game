@@ -1,5 +1,5 @@
 /**
- * Mori Sea Hunt — upper-body movement game
+ * Māori Sea Hunt — upper-body movement game
  * MediaPipe Pose: segmentation + wrist trails; ocean as virtual background (video-call style)
  */
 
@@ -8,14 +8,15 @@ const STAGE_CONFIGS = [
         id: 1,
         name: "Shallow warm-up",
         targetScore: 120,
-        lives: 6,
+        lives: 7,
         background: "img/background01.png",
         monsters: {
             size: { min: 100, max: 160 },
-            speed: { vx: 0.65, vyMin: 5.5, vyMax: 8.5 },
-            gravity: 0.055,
-            spawnInterval: { min: 700, max: 1400 },
-            spawnCount: { min: 2, max: 5 },
+            // Very gentle first stage so players can adapt
+            speed: { vx: 0.4, vyMin: 3.2, vyMax: 5.2 },
+            gravity: 0.038,
+            spawnInterval: { min: 1150, max: 1900 },
+            spawnCount: { min: 1, max: 3 },
             levelUpBonus: 0.25
         },
         pointsPerKill: 10
@@ -24,14 +25,15 @@ const STAGE_CONFIGS = [
         id: 2,
         name: "Surf zone",
         targetScore: 220,
-        lives: 5,
+        lives: 6,
         background: "img/background02.png",
         monsters: {
             size: { min: 92, max: 150 },
-            speed: { vx: 0.8, vyMin: 6.5, vyMax: 10 },
-            gravity: 0.065,
-            spawnInterval: { min: 650, max: 1300 },
-            spawnCount: { min: 3, max: 6 },
+            // Step up from warm-up
+            speed: { vx: 0.65, vyMin: 5.2, vyMax: 8.2 },
+            gravity: 0.052,
+            spawnInterval: { min: 900, max: 1650 },
+            spawnCount: { min: 2, max: 5 },
             levelUpBonus: 0.45
         },
         pointsPerKill: 15
@@ -44,10 +46,11 @@ const STAGE_CONFIGS = [
         background: "img/background03.png",
         monsters: {
             size: { min: 84, max: 140 },
-            speed: { vx: 0.95, vyMin: 7.5, vyMax: 12 },
-            gravity: 0.078,
-            spawnInterval: { min: 600, max: 1200 },
-            spawnCount: { min: 4, max: 7 },
+            // Faster mid game
+            speed: { vx: 0.86, vyMin: 6.7, vyMax: 10.8 },
+            gravity: 0.072,
+            spawnInterval: { min: 780, max: 1500 },
+            spawnCount: { min: 3, max: 6 },
             levelUpBonus: 0.65
         },
         pointsPerKill: 20
@@ -60,23 +63,29 @@ const STAGE_CONFIGS = [
         background: "img/background01.png",
         monsters: {
             size: { min: 78, max: 130 },
-            speed: { vx: 1.1, vyMin: 8.5, vyMax: 14 },
-            gravity: 0.09,
-            spawnInterval: { min: 550, max: 1100 },
-            spawnCount: { min: 4, max: 8 },
+            // Fastest final stage
+            speed: { vx: 1.08, vyMin: 8.2, vyMax: 13.4 },
+            gravity: 0.086,
+            spawnInterval: { min: 640, max: 1220 },
+            spawnCount: { min: 3, max: 7 },
             levelUpBonus: 0.85
         },
         pointsPerKill: 28
     }
 ];
 
-const MIN_SLASH_LEN = 26;
+const MIN_SLASH_LEN = 20;
 const WRIST_HISTORY_MAX = 18;
 /** Exponential smoothing: higher = snappier, lower = smoother */
 const WRIST_SMOOTH_ALPHA = 0.32;
-const HIT_RADIUS_EXTRA = 58;
+const HIT_RADIUS_EXTRA = 88;
+// User request: make monsters 1.3x larger
+const MONSTER_SIZE_MULT = 1.3;
+// Near miss feedback (visual only, does not count as a kill)
+const NEAR_HIT_RADIUS_EXTRA = 125;
+const NEAR_HIT_COOLDOWN_FRAMES = 14;
 const LANDMARK_MIN_VIS = 0.35;
-const MAX_MONSTERS = 5;
+const MAX_MONSTERS = 4;
 
 const monsterImages = [
     "img/sea-monster/blowfish.png",
@@ -142,6 +151,7 @@ let gameState = {
     monsters: [],
     slashTrails: [],
     killBursts: [],
+    nearHitBursts: [],
     floatTexts: [],
     leftWristHistory: [],
     rightWristHistory: [],
@@ -311,10 +321,16 @@ class Monster {
         this.size =
             config.monsters.size.min +
             Math.random() * (config.monsters.size.max - config.monsters.size.min);
+        this.size *= MONSTER_SIZE_MULT;
         this.monsterTypeIndex = Math.floor(Math.random() * loadedMonsterImages.length);
         this.opacity = 1;
         this.spawnAge = 0;
         this.spawnDuration = 22 + Math.floor(Math.random() * 10);
+        this.spawnHint = config.id === 1;
+        this.moveSlowFactor = config.id === 1 ? 0.65 : 1;
+        this.moveSlowRampFrames = 18;
+        this.hitVibe = 0;
+        this.nearHitCooldownFrames = 0;
 
         this.puffPhase = Math.random() * Math.PI * 2;
         this.puffSpeed = 0.09 + Math.random() * 0.05;
@@ -325,7 +341,6 @@ class Monster {
         this.electricShock = 0;
         this.flipX = 1;
 
-        const spawnType = Math.random();
         const sp = this.monsterTypeIndex;
 
         if (sp === SPECIES.CRAB) {
@@ -337,7 +352,7 @@ class Monster {
         } else if (sp === SPECIES.EEL && Math.random() < 0.55) {
             this.spawnEelSlither(config);
         } else {
-            this.spawnGeneric(config, spawnType);
+            this.spawnGeneric(config);
         }
 
         this.gravity = this.gravity ?? config.monsters.gravity;
@@ -364,84 +379,96 @@ class Monster {
         this.points = config.pointsPerKill;
     }
 
+    spawnCornerGlide(config, opts = {}) {
+        const fromLeft = opts.fromLeft ?? Math.random() > 0.5;
+        const travelFrames =
+            opts.travelFrames ??
+            (config.id === 1
+                ? 175 + Math.floor(Math.random() * 55)
+                : 145 + Math.floor(Math.random() * 45));
+        const gravityScale = opts.gravityScale ?? (config.id === 1 ? 0.18 : 0.22);
+
+        // Spawn from bottom-left / bottom-right (slightly off-screen) and glide toward center.
+        const xEdge = fromLeft ? -this.size * 0.15 : canvas.width + this.size * 0.15;
+        const yEdge = canvas.height + this.size * (0.34 + Math.random() * 0.22);
+
+        const targetX =
+            opts.targetX ?? canvas.width * (0.5 + (Math.random() - 0.5) * 0.18);
+        const targetY =
+            opts.targetY ?? canvas.height * (0.46 + Math.random() * 0.08);
+
+        this.x = xEdge;
+        this.y = yEdge;
+
+        this.gravity = config.monsters.gravity * gravityScale;
+
+        // Solve a simple constant-gravity trajectory so it lands near targetY at travelFrames.
+        const t = travelFrames;
+        const g = this.gravity;
+        this.vx = (targetX - this.x) / t;
+        this.vy = (targetY - this.y - 0.5 * g * t * t) / t;
+    }
+
     spawnCrabHorizontal(config) {
-        this.x = this.size / 2 + Math.random() * (canvas.width - this.size);
-        this.y = canvas.height + this.size * 0.42;
-        const goRight = Math.random() > 0.5;
-        this.vx = (goRight ? 1 : -1) * config.monsters.speed.vx * (1.85 + Math.random() * 1.35);
-        this.vy = -(1.0 + Math.random() * 2.2);
-        this.gravity = config.monsters.gravity * 0.32;
-        this.spin = (Math.random() - 0.5) * 0.005;
+        const fromLeft = Math.random() > 0.5;
+        this.spawnCornerGlide(config, {
+            fromLeft,
+            targetY: canvas.height * (0.48 + Math.random() * 0.06),
+            gravityScale: 0.2
+        });
+        this.spin = (Math.random() - 0.5) * 0.004;
         this.rotation = 0;
     }
 
     spawnOctopusBob(config) {
-        this.x = this.size / 2 + Math.random() * (canvas.width - this.size);
-        this.y = canvas.height + this.size * 0.48;
-        this.vx = (Math.random() - 0.5) * config.monsters.speed.vx * 1.05;
-        this.vy = -(config.monsters.speed.vyMin * 0.5 + Math.random() * 2.0);
-        this.gravity = config.monsters.gravity * 0.68;
+        this.spawnCornerGlide(config, {
+            targetY: canvas.height * (0.46 + Math.random() * 0.1),
+            gravityScale: 0.25
+        });
         this.spin = (Math.random() - 0.5) * 0.016;
         this.rotation = (Math.random() - 0.5) * 0.2;
         this.octopusBaseRot = this.rotation;
     }
 
     spawnStarfishCreep(config) {
-        this.x = this.size / 2 + Math.random() * (canvas.width - this.size);
-        this.y = canvas.height + this.size * 0.35;
-        this.vx = (Math.random() - 0.5) * config.monsters.speed.vx * 0.65;
-        this.vy = -(config.monsters.speed.vyMin * 0.32 + Math.random() * 1.1);
-        this.gravity = config.monsters.gravity * 0.42;
+        this.spawnCornerGlide(config, {
+            targetY: canvas.height * (0.52 + Math.random() * 0.06),
+            gravityScale: 0.18
+        });
         this.rotation = Math.random() * Math.PI * 2;
     }
 
     spawnEelSlither(config) {
         const fromLeft = Math.random() > 0.5;
-        this.x = fromLeft ? -this.size / 2 : canvas.width + this.size / 2;
-        this.y = canvas.height * 0.28 + Math.random() * canvas.height * 0.48;
-        this.vx = (fromLeft ? 1 : -1) * config.monsters.speed.vx * (1.35 + Math.random() * 0.95);
-        this.vy = (Math.random() - 0.5) * config.monsters.speed.vx * 1.1;
-        this.gravity = config.monsters.gravity * 0.52;
+        this.spawnCornerGlide(config, {
+            fromLeft,
+            targetY: canvas.height * (0.42 + Math.random() * 0.12),
+            gravityScale: 0.2
+        });
         this.rotation = fromLeft ? -0.15 : 0.15;
         this.spin = 0;
     }
 
-    spawnGeneric(config, spawnType) {
-        if (spawnType < 0.35) {
-            this.x = this.size / 2 + Math.random() * (canvas.width - this.size);
-            this.y = canvas.height + this.size / 2;
-            this.vx = (Math.random() - 0.5) * config.monsters.speed.vx * 1.45;
-            this.vy = -(
-                config.monsters.speed.vyMin +
-                Math.random() * (config.monsters.speed.vyMax - config.monsters.speed.vyMin)
-            );
-        } else if (spawnType < 0.5) {
-            this.x = -this.size / 2;
-            this.y = canvas.height * 0.22 + Math.random() * canvas.height * 0.48;
-            this.vx = config.monsters.speed.vx * (0.55 + Math.random() * 0.75);
-            this.vy = -(config.monsters.speed.vyMin * 0.35 + Math.random() * config.monsters.speed.vyMin * 0.55);
-        } else if (spawnType < 0.65) {
-            this.x = canvas.width + this.size / 2;
-            this.y = canvas.height * 0.22 + Math.random() * canvas.height * 0.48;
-            this.vx = -config.monsters.speed.vx * (0.55 + Math.random() * 0.75);
-            this.vy = -(config.monsters.speed.vyMin * 0.35 + Math.random() * config.monsters.speed.vyMin * 0.55);
-        } else if (spawnType < 0.82) {
-            this.x = this.size / 2 + Math.random() * (canvas.width - this.size);
-            this.y = canvas.height * 0.55 + Math.random() * canvas.height * 0.28;
-            this.vx = (Math.random() - 0.5) * config.monsters.speed.vx * 1.15;
-            this.vy = -(config.monsters.speed.vyMin * 0.5 + Math.random() * config.monsters.speed.vyMin * 0.45);
-        } else {
-            this.x = this.size / 2 + Math.random() * (canvas.width - this.size);
-            this.y = -this.size / 2;
-            this.vx = (Math.random() - 0.5) * config.monsters.speed.vx * 0.75;
-            this.vy = config.monsters.speed.vyMin * 0.45 + Math.random() * config.monsters.speed.vyMin * 0.55;
-        }
+    spawnGeneric(config) {
+        const fromLeft = Math.random() > 0.5;
+        this.spawnCornerGlide(config, {
+            fromLeft,
+            targetY: canvas.height * (0.46 + Math.random() * 0.12),
+            gravityScale: 0.22
+        });
     }
 
     getSpawnScale() {
         if (this.spawnAge >= this.spawnDuration) return 1;
         const t = this.spawnAge / this.spawnDuration;
         return 0.2 + 0.8 * (1 - Math.pow(1 - t, 3));
+    }
+
+    getSpawnMoveFactor() {
+        if (this.moveSlowFactor === 1) return 1;
+        const t = Math.min(1, this.spawnAge / this.moveSlowRampFrames);
+        // At spawn start => moveSlowFactor; approaches 1 as it grows in.
+        return 1 - (1 - this.moveSlowFactor) * (1 - t);
     }
 
     /** Blowfish puff scale; others stay 1 */
@@ -461,23 +488,27 @@ class Monster {
 
         this.spawnAge++;
         const sp = this.monsterTypeIndex;
+        const moveK = this.getSpawnMoveFactor();
+
+        if (this.hitVibe > 0) this.hitVibe = Math.max(0, this.hitVibe - 0.055);
+        if (this.nearHitCooldownFrames > 0) this.nearHitCooldownFrames--;
 
         if (sp === SPECIES.EEL) {
             this.eelPhase += this.eelWiggle;
-            this.x += Math.sin(this.eelPhase) * this.eelAmp * 0.14;
+            this.x += Math.sin(this.eelPhase) * this.eelAmp * 0.14 * moveK;
             this.rotation += Math.sin(this.eelPhase * 1.3) * 0.04;
         } else if (sp === SPECIES.ELECTRIC) {
             this.electricShock += 0.45 + Math.random() * 0.35;
-            this.vx += (Math.random() - 0.5) * 0.48;
-            this.vy += (Math.random() - 0.5) * 0.38;
+            this.vx += (Math.random() - 0.5) * 0.48 * moveK;
+            this.vy += (Math.random() - 0.5) * 0.38 * moveK;
             this.rotation += (Math.random() - 0.5) * 0.04;
             const maxV = 5.2;
             this.vx = Math.max(-maxV, Math.min(maxV, this.vx));
             this.vy = Math.max(-maxV, Math.min(maxV, this.vy));
         } else if (sp === SPECIES.OCTOPUS) {
             this.bobPhase += 0.065;
-            this.y += Math.sin(this.bobPhase) * 0.55;
-            this.x += Math.cos(this.bobPhase * 0.7) * 0.35;
+            this.y += Math.sin(this.bobPhase) * 0.55 * moveK;
+            this.x += Math.cos(this.bobPhase * 0.7) * 0.35 * moveK;
             const base = this.octopusBaseRot ?? this.rotation;
             this.rotation = base + Math.sin(this.bobPhase * 0.5) * 0.28;
         } else if (sp === SPECIES.STARFISH) {
@@ -488,10 +519,10 @@ class Monster {
             this.rotation += this.spin;
         }
 
-        this.vy += this.gravity;
+        this.vy += this.gravity * moveK;
 
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x += this.vx * moveK;
+        this.y += this.vy * moveK;
 
         if (this.x < this.size / 2) {
             this.x = this.size / 2;
@@ -540,6 +571,39 @@ class Monster {
         if (sp === SPECIES.ELECTRIC) {
             const flick = 0.88 + 0.12 * Math.sin(this.electricShock);
             ctx2.scale(flick, flick);
+        }
+
+        if (this.hitVibe > 0.001) {
+            const shake = this.hitVibe * 2.2;
+            const t = this.spawnAge * 0.9 + this.monsterTypeIndex;
+            ctx2.translate(Math.sin(t) * shake, Math.cos(t * 1.2) * shake);
+            ctx2.save();
+            const a = Math.min(1, this.hitVibe * 1.35);
+            ctx2.globalAlpha = a * this.opacity;
+            ctx2.strokeStyle = `rgba(144, 224, 239, ${a})`;
+            ctx2.lineWidth = 5 + 7 * a;
+            ctx2.shadowColor = `rgba(144, 224, 239, ${a})`;
+            ctx2.shadowBlur = 22 + 18 * a;
+            ctx2.beginPath();
+            ctx2.arc(0, 0, half + 10 + 9 * a, 0, Math.PI * 2);
+            ctx2.stroke();
+            ctx2.restore();
+        }
+
+        if (this.spawnHint) {
+            const hintT = Math.max(0, 1 - this.spawnAge / 18);
+            if (hintT > 0.001) {
+                ctx2.save();
+                ctx2.globalAlpha = hintT * 0.55;
+                ctx2.strokeStyle = "rgba(144,224,239,1)";
+                ctx2.lineWidth = 6;
+                ctx2.shadowColor = "rgba(144,224,239,0.95)";
+                ctx2.shadowBlur = 26 * hintT + 6;
+                ctx2.beginPath();
+                ctx2.arc(0, 0, half + 12, 0, Math.PI * 2);
+                ctx2.stroke();
+                ctx2.restore();
+            }
         }
 
         if (this.image && this.image.complete && this.image.naturalWidth) {
@@ -691,6 +755,55 @@ class KillBurst {
             ctx2.arc(px, py, p.size * this.life, 0, Math.PI * 2);
             ctx2.fill();
             i++;
+        }
+        ctx2.restore();
+    }
+}
+
+class NearHitBurst {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.life = 0.9;
+        this.particles = [];
+        // Lightweight cyan water splash particles
+        for (let i = 0; i < 14; i++) {
+            const a = (Math.PI * 2 * i) / 14 + Math.random() * 0.35;
+            const sp = 2.2 + Math.random() * 5.4;
+            this.particles.push({
+                x: 0,
+                y: 0,
+                vx: Math.cos(a) * sp,
+                vy: Math.sin(a) * sp - 1.1,
+                size: 2.5 + Math.random() * 4.2,
+                hue: 190 + Math.random() * 22
+            });
+        }
+    }
+
+    update() {
+        this.life -= 0.05;
+        for (const p of this.particles) {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.16;
+            p.vx *= 0.98;
+        }
+        return this.life > 0;
+    }
+
+    draw(ctx2) {
+        ctx2.save();
+        ctx2.globalAlpha = Math.max(0, this.life);
+        for (let i = 0; i < this.particles.length; i++) {
+            const p = this.particles[i];
+            const px = this.x + p.x;
+            const py = this.y + p.y;
+            const a = this.life * 0.9;
+            ctx2.fillStyle = `hsla(${p.hue}, 98%, 62%, ${a})`;
+            ctx2.beginPath();
+            ctx2.arc(px, py, p.size * this.life, 0, Math.PI * 2);
+            ctx2.fill();
         }
         ctx2.restore();
     }
@@ -887,9 +1000,21 @@ function approximateCubicLength(b0, b1, b2, b3) {
 function tryHitMonsterAt(px, py, hitIds) {
     for (const monster of gameState.monsters) {
         if (!monster.alive || hitIds.has(monster)) continue;
-        if (monster.checkHit(px, py)) {
+
+        const drawScale = monster.getDrawScale();
+        const half = drawScale / 2;
+        const dx = monster.x - px;
+        const dy = monster.y - py;
+        const dist2 = dx * dx + dy * dy;
+
+        const rHit = half + HIT_RADIUS_EXTRA;
+        const rNear = half + NEAR_HIT_RADIUS_EXTRA;
+
+        if (dist2 < rHit * rHit) {
             hitIds.add(monster);
             monster.alive = false;
+            monster.hitVibe = 1;
+            monster.nearHitCooldownFrames = 0;
             gameState.combo++;
             const comboTier = Math.floor(gameState.combo / 5);
             const config = STAGE_CONFIGS[gameState.currentStage];
@@ -903,6 +1028,13 @@ function tryHitMonsterAt(px, py, hitIds) {
             if (gameState.combo >= 3) {
                 showComboText(monster.x, monster.y, `${gameState.combo} combo`);
             }
+        } else if (dist2 < rNear * rNear) {
+            // Near miss feedback: visual only (does not affect score/lives)
+            if (monster.nearHitCooldownFrames <= 0) {
+                monster.nearHitCooldownFrames = NEAR_HIT_COOLDOWN_FRAMES;
+                gameState.nearHitBursts.push(new NearHitBurst(monster.x, monster.y));
+            }
+            monster.hitVibe = Math.max(monster.hitVibe, 0.48);
         }
     }
 }
@@ -911,7 +1043,7 @@ function sampleHitsAlongLine(px0, py0, px1, py1) {
     const dx = px1 - px0;
     const dy = py1 - py0;
     const distance = Math.hypot(dx, dy);
-    const steps = Math.max(1, Math.ceil(distance / 14));
+    const steps = Math.max(1, Math.ceil(distance / 11));
     const hitIds = new Set();
     for (let i = 0; i <= steps; i++) {
         const t = i / steps;
@@ -921,7 +1053,7 @@ function sampleHitsAlongLine(px0, py0, px1, py1) {
 
 function sampleHitsAlongCubic(b0, b1, b2, b3) {
     const len = approximateCubicLength(b0, b1, b2, b3);
-    const steps = Math.max(12, Math.ceil(len / 12));
+    const steps = Math.max(12, Math.ceil(len / 10));
     const hitIds = new Set();
     for (let i = 0; i <= steps; i++) {
         const t = i / steps;
@@ -1238,6 +1370,12 @@ function gameLoop() {
         return alive;
     });
 
+    gameState.nearHitBursts = gameState.nearHitBursts.filter((b) => {
+        const alive = b.update();
+        if (alive) b.draw(ctx);
+        return alive;
+    });
+
     gameState.floatTexts = gameState.floatTexts.filter((f) => {
         const alive = f.update();
         if (alive) f.draw(ctx);
@@ -1258,6 +1396,7 @@ function initStage(stageIndex) {
     gameState.monsters = [];
     gameState.slashTrails = [];
     gameState.killBursts = [];
+    gameState.nearHitBursts = [];
     gameState.floatTexts = [];
     gameState.leftWristHistory = [];
     gameState.rightWristHistory = [];
@@ -1300,7 +1439,7 @@ function enableStartAfterCamera() {
     const cameraStatusEl = document.getElementById("camera-status");
     if (cameraStatusEl) {
         cameraStatusEl.textContent =
-            "Camera is on. You will see yourself on a virtual ocean background (cut-out). You can start the game.";
+            "Camera is ready. You can start the game.";
     }
     startBtn.disabled = false;
 }
@@ -1390,7 +1529,7 @@ init().catch((err) => {
     const cameraStatusEl = document.getElementById("camera-status");
     if (cameraStatusEl) {
         cameraStatusEl.textContent =
-            "Could not open the camera. Allow camera access in your browser settings, then refresh the page.";
+            "Camera unavailable. Allow camera access in browser settings, then refresh.";
     }
     alert(
         "Could not open the camera or load the pose model. Check camera permission and your network (MediaPipe scripts load from the web)."
