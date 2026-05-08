@@ -12,6 +12,8 @@
             <video id="camera-feed" autoplay playsinline muted></video>
             <canvas id="bg-composite" aria-hidden="true"></canvas>
         </div>
+
+        <!-- UI overlay (score board + grip hint + camera badge) -->
         <div id="ui-overlay">
             <div id="grip-hint" class="grip-hint hidden" role="status">
                 Grip tip: make a light fist or loose grip, keep your forearm toward the camera. Weapon size matches your arm length.
@@ -25,34 +27,82 @@
                     <span class="label">Stage</span>
                     <span id="stage" class="value">1</span>
                 </div>
-                <div class="score-item">
+                <div class="score-item stage-progress-item">
                     <span class="label">Target</span>
                     <span id="target" class="value">0/120</span>
+                    <div id="stage-progress-track">
+                        <div id="stage-progress-fill"></div>
+                    </div>
                 </div>
                 <div class="score-item">
                     <span class="label">Combo</span>
                     <span id="combo" class="value">0</span>
                 </div>
                 <div class="score-item">
-                    <span class="label">Lives</span>
+                    <span class="label">Mauri</span>
                     <span id="lives" class="value">5</span>
                 </div>
             </div>
-        </div>
-        <canvas id="game-canvas" aria-label="Game playfield"></canvas>
-        <div id="start-screen">
-            <h1>Māori Sea Hunt</h1>
-            <p>Please <strong>allow camera access</strong>.</p>
-            <p>You will appear on an <strong>ocean background</strong>. Stand facing the camera and gently swing your arms.</p>
-            <p id="camera-status" class="hint" role="status">Checking camera…</p>
-            <div id="weapon-picker" class="weapon-picker">
-                <p class="weapon-picker-title">Weapon (optional)</p>
-                <div id="weapon-grid" class="weapon-grid" role="listbox" aria-label="Weapon selection"></div>
-                <p class="weapon-picker-hint">
-                    Pick a weapon if you like. Keep both arms in view. You can also choose <strong>No weapon</strong>.
-                </p>
+            <!-- Camera active badge (shown during gameplay) -->
+            <div id="camera-badge" class="camera-badge hidden" aria-live="polite">
+                <span class="camera-dot"></span> Camera Active
             </div>
-            <button type="button" id="start-btn" disabled>Start game</button>
+        </div>
+
+        <canvas id="game-canvas" aria-label="Game playfield"></canvas>
+
+        <!-- Empty state shown between monster waves -->
+        <div id="empty-state" class="empty-state hidden" aria-live="polite">
+            <p class="empty-title">Get ready, warrior!</p>
+            <p class="empty-sub">Sea creatures are on their way…</p>
+        </div>
+
+        <!-- Persistent bottom instruction bar -->
+        <div id="instruction-bar" class="instruction-bar hidden">
+            Move your arms with strength and grace to protect the people!
+            <span class="instruction-esc">ESC to exit</span>
+        </div>
+
+        <!-- Loading overlay (shown while MediaPipe warms up) -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-ring"></div>
+            <p id="loading-text">Loading pose model…</p>
+        </div>
+
+        <!-- Story card overlay (shown before each stage) -->
+        <div id="story-card-overlay" class="story-card-overlay hidden">
+            <img id="story-card-img" src="" alt="" class="story-card-bg hidden" />
+            <div class="story-card-inner">
+                <p id="story-card-stage" class="story-card-stage"></p>
+                <h2 id="story-card-title" class="story-card-title"></h2>
+                <p id="story-card-desc" class="story-card-desc"></p>
+                <button type="button" id="story-card-begin">Begin Stage</button>
+            </div>
+        </div>
+
+        <!-- Error card (replaces alert()) -->
+        <div id="error-card" class="error-card hidden">
+            <div class="error-inner">
+                <p class="error-icon">⚠️</p>
+                <p id="error-msg" class="error-msg">Camera unavailable.</p>
+                <p class="error-hint">Allow camera access in browser settings, then refresh the page.</p>
+                <button type="button" id="error-dismiss">Close</button>
+            </div>
+        </div>
+
+        <!-- Game screens -->
+        <div id="start-screen">
+            <div class="start-card">
+                <h1>Māori Sea Hunt</h1>
+                <p class="start-tagline">Swing your arms · defeat sea creatures · protect your people</p>
+                <div id="weapon-picker" class="weapon-picker">
+                    <p class="weapon-picker-title">Choose your weapon</p>
+                    <div id="weapon-grid" class="weapon-grid" role="listbox" aria-label="Weapon selection"></div>
+                </div>
+                <button type="button" id="start-btn" disabled>Begin</button>
+                <p id="camera-status" class="hint" role="status">Checking camera…</p>
+                <p class="safety-tip">🛡️ Stand or sit safely with space to swing your arms gently</p>
+            </div>
         </div>
         <div id="stage-complete-screen" class="hidden">
             <h1>Stage complete</h1>
@@ -61,15 +111,18 @@
             <button type="button" id="next-stage-btn">Next stage</button>
         </div>
         <div id="game-complete-screen" class="hidden">
-            <h1>You cleared all stages</h1>
+            <h1>Ka rawe! — Magnificent!</h1>
+            <p class="end-sub">You defeated all sea creatures and protected your people.</p>
             <p>Total score: <span id="total-score">0</span></p>
+            <p class="end-whanau">Share this moment with your whānau 🌊</p>
             <button type="button" id="play-again-btn">Play again</button>
         </div>
         <div id="game-over-screen" class="hidden">
-            <h1>Game over</h1>
-            <p>You reached stage <span id="reached-stage">1</span>.</p>
-            <p>Final score: <span id="final-score">0</span></p>
-            <button type="button" id="restart-btn">Restart</button>
+            <h1>Kia kaha! — Stay strong!</h1>
+            <p class="end-sub">You fought bravely to stage <span id="reached-stage">1</span>.</p>
+            <p>Score: <span id="final-score">0</span></p>
+            <p class="end-whanau">Every swing is good exercise — try again!</p>
+            <button type="button" id="restart-btn">Play again</button>
         </div>
     </div>
 
