@@ -12,12 +12,11 @@ const STAGE_CONFIGS = [
         background: "img/background01.png",
         monsters: {
             size: { min: 100, max: 160 },
-            // Very gentle first stage so players can adapt
-            speed: { vx: 0.4, vyMin: 3.2, vyMax: 5.2 },
-            gravity: 0.038,
-            spawnInterval: { min: 1150, max: 1900 },
-            spawnCount: { min: 1, max: 3 },
-            levelUpBonus: 0.25
+            speed: { vx: 0.28, vyMin: 2.0, vyMax: 3.2 },
+            gravity: 0.022,
+            spawnInterval: { min: 1900, max: 2800 },
+            spawnCount: { min: 1, max: 2 },
+            levelUpBonus: 0.20
         },
         pointsPerKill: 10
     },
@@ -25,16 +24,15 @@ const STAGE_CONFIGS = [
         id: 2,
         name: "Surf zone",
         targetScore: 220,
-        lives: 6,
+        lives: 7,
         background: "img/background02.png",
         monsters: {
             size: { min: 92, max: 150 },
-            // Step up from warm-up
-            speed: { vx: 0.65, vyMin: 5.2, vyMax: 8.2 },
-            gravity: 0.052,
-            spawnInterval: { min: 900, max: 1650 },
-            spawnCount: { min: 2, max: 5 },
-            levelUpBonus: 0.45
+            speed: { vx: 0.42, vyMin: 3.0, vyMax: 4.8 },
+            gravity: 0.032,
+            spawnInterval: { min: 1600, max: 2400 },
+            spawnCount: { min: 1, max: 3 },
+            levelUpBonus: 0.35
         },
         pointsPerKill: 15
     },
@@ -42,16 +40,15 @@ const STAGE_CONFIGS = [
         id: 3,
         name: "Deep current",
         targetScore: 380,
-        lives: 5,
+        lives: 6,
         background: "img/background03.png",
         monsters: {
             size: { min: 84, max: 140 },
-            // Faster mid game
-            speed: { vx: 0.86, vyMin: 6.7, vyMax: 10.8 },
-            gravity: 0.072,
-            spawnInterval: { min: 780, max: 1500 },
-            spawnCount: { min: 3, max: 6 },
-            levelUpBonus: 0.65
+            speed: { vx: 0.55, vyMin: 4.0, vyMax: 6.5 },
+            gravity: 0.044,
+            spawnInterval: { min: 1350, max: 2100 },
+            spawnCount: { min: 2, max: 4 },
+            levelUpBonus: 0.50
         },
         pointsPerKill: 20
     },
@@ -59,18 +56,49 @@ const STAGE_CONFIGS = [
         id: 4,
         name: "Final abyss",
         targetScore: 520,
-        lives: 4,
-        background: "img/background01.png",
+        lives: 5,
+        background: "img/background02.png",
         monsters: {
             size: { min: 78, max: 130 },
-            // Fastest final stage
-            speed: { vx: 1.08, vyMin: 8.2, vyMax: 13.4 },
-            gravity: 0.086,
-            spawnInterval: { min: 640, max: 1220 },
-            spawnCount: { min: 3, max: 7 },
-            levelUpBonus: 0.85
+            speed: { vx: 0.70, vyMin: 5.0, vyMax: 8.2 },
+            gravity: 0.055,
+            spawnInterval: { min: 1150, max: 1900 },
+            spawnCount: { min: 2, max: 5 },
+            levelUpBonus: 0.68
         },
         pointsPerKill: 28
+    }
+];
+
+const AFFIRMATIONS = [
+    "Ka rawe!", "Tino pai!", "Āe mārika!", "Kia kaha!",
+    "Mō ake tonu!", "Ka mau te wehi!", "Tū māia!", "Ka pai rawa atu!"
+];
+
+const STAGE_STORIES = [
+    {
+        stage: "Stage 1",
+        title: "Shallow Waters",
+        desc: "The sea stirs. Small creatures circle the reef. Raise your arms, warrior — protect your people from the first wave!",
+        img: "img/story-card/1-stay alert.png"
+    },
+    {
+        stage: "Stage 2",
+        title: "The Surf Zone",
+        desc: "The ocean churns. Faster creatures pour through the surf. Your people need you — strike before they reach the shore!",
+        img: ""
+    },
+    {
+        stage: "Stage 3",
+        title: "Deep Current",
+        desc: "The deep current pulls monsters up from the dark. They are swift and relentless. Stand firm, champion of Tangaroa!",
+        img: ""
+    },
+    {
+        stage: "Stage 4",
+        title: "The Final Abyss",
+        desc: "The sea roars with its fiercest guardians. Only the bravest warrior can protect the people from the abyss. Kia kaha!",
+        img: ""
     }
 ];
 
@@ -127,8 +155,8 @@ const WEAPONS = [
 ];
 
 /** Weapon width ≈ forearm length (px) × ratio, clamped min–max */
-const WEAPON_FOREARM_RATIO = 0.96;
-const WEAPON_MIN_WIDTH_PX = 178;
+const WEAPON_FOREARM_RATIO = 1.55;
+const WEAPON_MIN_WIDTH_PX = 260;
 
 /** Matches monsterImages indices for behaviour animation */
 const SPECIES = {
@@ -141,6 +169,127 @@ const SPECIES = {
     TURTLE: 6
 };
 
+// ─── Audio ────────────────────────────────────────────────────────────────────
+let _audioCtx = null;
+function audioCtx() {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return _audioCtx;
+}
+
+function playTone(freq, type, duration, gain, startTime) {
+    const ctx = audioCtx();
+    const t = startTime ?? ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.connect(g);
+    g.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(gain, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+    osc.start(t);
+    osc.stop(t + duration);
+}
+
+function playHitSound(comboTier) {
+    const ctx = audioCtx();
+    const now = ctx.currentTime;
+
+    // ── Sharp sawtooth sweep: high→low "slice" transient ──────────────────
+    const osc = ctx.createOscillator();
+    const g1  = ctx.createGain();
+    osc.connect(g1);
+    g1.connect(ctx.destination);
+    osc.type = "sawtooth";
+    const baseFreq = 1600 + (comboTier || 0) * 220;
+    osc.frequency.setValueAtTime(baseFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(160, now + 0.09);
+    g1.gain.setValueAtTime(0.32, now);
+    g1.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+    osc.start(now);
+    osc.stop(now + 0.13);
+
+    // ── White-noise burst: water-splash impact ─────────────────────────────
+    const bufLen = Math.ceil(ctx.sampleRate * 0.09);
+    const buf    = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data   = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufLen, 1.8);
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const bpf = ctx.createBiquadFilter();
+    bpf.type = "bandpass";
+    bpf.frequency.value = 1400;
+    bpf.Q.value = 0.7;
+    const g2 = ctx.createGain();
+    noise.connect(bpf);
+    bpf.connect(g2);
+    g2.connect(ctx.destination);
+    g2.gain.setValueAtTime(0.22, now);
+    g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+    noise.start(now);
+    noise.stop(now + 0.1);
+}
+
+function playComboSound(combo) {
+    // Ascending chime on each combo threshold
+    const notes = [523, 659, 784, 988, 1175];
+    const freq = notes[Math.min(Math.floor((combo - 3) / 2), notes.length - 1)];
+    playTone(freq, "triangle", 0.28, 0.28);
+}
+
+function playLifeLostSound() {
+    const ctx = audioCtx();
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.connect(g);
+    g.connect(ctx.destination);
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(240, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(72, ctx.currentTime + 0.38);
+    g.gain.setValueAtTime(0.18, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.38);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.38);
+}
+
+function playStageCompleteSound() {
+    const ctx = audioCtx();
+    const melody = [523, 659, 784, 1047];
+    melody.forEach((freq, i) => {
+        playTone(freq, "sine", 0.32, 0.28, ctx.currentTime + i * 0.14);
+    });
+}
+
+let _swingSoundCooldown = 0;
+let _gleamTick = 0;   // global gleam phase counter (cycles 0–179)
+function playSwingSound(speed) {
+    if (_swingSoundCooldown > 0) return;
+    _swingSoundCooldown = 10;
+    const ctx = audioCtx();
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.connect(g);
+    g.connect(ctx.destination);
+    const baseFreq = Math.min(900, 280 + speed * 2.8);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(baseFreq, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(55, ctx.currentTime + 0.13);
+    g.gain.setValueAtTime(0.07, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.13);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.13);
+}
+
+function playGameOverSound() {
+    const ctx = audioCtx();
+    [330, 277, 220].forEach((freq, i) => {
+        playTone(freq, "triangle", 0.38, 0.22, ctx.currentTime + i * 0.18);
+    });
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 let gameState = {
     isPlaying: false,
     currentStage: 0,
@@ -149,16 +298,19 @@ let gameState = {
     combo: 0,
     lives: 5,
     monsters: [],
-    slashTrails: [],
+    leftTrail: null,
+    rightTrail: null,
     killBursts: [],
     nearHitBursts: [],
     floatTexts: [],
+    swingSparkles: [],
     leftWristHistory: [],
     rightWristHistory: [],
     leftWristSmooth: { x: null, y: null },
     rightWristSmooth: { x: null, y: null },
     selectedWeaponIndex: 0,
     weaponPoseSmooth: { left: null, right: null },
+    weaponHitFlash: 0,
     gripHintTimer: null
 };
 
@@ -169,6 +321,9 @@ const bgCanvas = document.getElementById("bg-composite");
 const bgCtx = bgCanvas.getContext("2d");
 const scratchCanvas = document.createElement("canvas");
 const scratchCtx = scratchCanvas.getContext("2d");
+// Persistent rim-glow canvas: warm amber silhouette drawn blurred under person
+const rimCanvas = document.createElement("canvas");
+const rimCtx = rimCanvas.getContext("2d");
 const bgImage = new Image();
 const startScreen = document.getElementById("start-screen");
 const stageCompleteScreen = document.getElementById("stage-complete-screen");
@@ -191,16 +346,47 @@ const totalScoreEl = document.getElementById("total-score");
 const reachedStageEl = document.getElementById("reached-stage");
 const finalScoreEl = document.getElementById("final-score");
 
+const loadingOverlay   = document.getElementById("loading-overlay");
+const storyCardOverlay = document.getElementById("story-card-overlay");
+const storyCardStageEl = document.getElementById("story-card-stage");
+const storyCardImgEl   = document.getElementById("story-card-img");
+const storyCardTitleEl = document.getElementById("story-card-title");
+const storyCardDescEl  = document.getElementById("story-card-desc");
+const storyCardBeginBtn= document.getElementById("story-card-begin");
+const cameraBadgeEl    = document.getElementById("camera-badge");
+const emptyStateEl     = document.getElementById("empty-state");
+const instructionBarEl = document.getElementById("instruction-bar");
+const errorCardEl      = document.getElementById("error-card");
+const errorMsgEl       = document.getElementById("error-msg");
+const errorDismissBtn  = document.getElementById("error-dismiss");
+const progressFillEl   = document.getElementById("stage-progress-fill");
+
 const loadedMonsterImages = [];
 const loadedWeapons = [];
 
+// Logical (CSS-pixel) dimensions used by all game coordinate calculations.
+// Canvas buffers are sized at gameW/H × devicePixelRatio for crisp rendering.
+let gameW = window.innerWidth;
+let gameH = window.innerHeight;
+
 function resizeCanvas() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    canvas.width = w;
-    canvas.height = h;
-    bgCanvas.width = w;
-    bgCanvas.height = h;
+    const dpr = window.devicePixelRatio || 1;
+    gameW = window.innerWidth;
+    gameH = window.innerHeight;
+
+    canvas.width  = Math.round(gameW * dpr);
+    canvas.height = Math.round(gameH * dpr);
+    canvas.style.width  = gameW + "px";
+    canvas.style.height = gameH + "px";
+
+    bgCanvas.width  = Math.round(gameW * dpr);
+    bgCanvas.height = Math.round(gameH * dpr);
+    bgCanvas.style.width  = gameW + "px";
+    bgCanvas.style.height = gameH + "px";
+
+    // Reset to identity then scale so drawing uses logical pixels.
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
 /**
@@ -234,8 +420,8 @@ function drawImageCover(ctx2, src, cw, ch) {
  * Ocean virtual background + segmented person only (mirrored to match game coords)
  */
 function drawVirtualBackground(results) {
-    const w = bgCanvas.width;
-    const h = bgCanvas.height;
+    const w = gameW;
+    const h = gameH;
     if (!w || !h) return;
 
     bgCtx.clearRect(0, 0, w, h);
@@ -245,6 +431,9 @@ function drawVirtualBackground(results) {
         bgCtx.fillStyle = "#023047";
         bgCtx.fillRect(0, 0, w, h);
     }
+    // Darken background slightly so person and monsters stand out
+    bgCtx.fillStyle = "rgba(0, 10, 24, 0.28)";
+    bgCtx.fillRect(0, 0, w, h);
 
     const vw = video.videoWidth || 640;
     const vh = video.videoHeight || 360;
@@ -261,18 +450,51 @@ function drawVirtualBackground(results) {
         return;
     }
 
-    scratchCanvas.width = vw;
-    scratchCanvas.height = vh;
+    if (scratchCanvas.width !== vw || scratchCanvas.height !== vh) {
+        scratchCanvas.width = vw;
+        scratchCanvas.height = vh;
+        rimCanvas.width = vw;
+        rimCanvas.height = vh;
+    }
+
+    // ── Person cutout (mask → video pixels) ──────────────────────────
     scratchCtx.clearRect(0, 0, vw, vh);
     scratchCtx.drawImage(mask, 0, 0, vw, vh);
     scratchCtx.globalCompositeOperation = "source-in";
     scratchCtx.drawImage(video, 0, 0, vw, vh);
     scratchCtx.globalCompositeOperation = "source-over";
 
+    // ── Warm amber rim-glow silhouette ────────────────────────────────
+    rimCtx.clearRect(0, 0, vw, vh);
+    rimCtx.drawImage(mask, 0, 0, vw, vh);
+    rimCtx.globalCompositeOperation = "source-in";
+    rimCtx.fillStyle = "rgba(255, 155, 50, 0.92)";
+    rimCtx.fillRect(0, 0, vw, vh);
+    rimCtx.globalCompositeOperation = "source-over";
+
+    // Draw blurred warm silhouette first (rim glow behind person)
+    bgCtx.save();
+    bgCtx.filter = "blur(22px)";
+    bgCtx.globalAlpha = 0.72;
+    bgCtx.translate(w, 0);
+    bgCtx.scale(-1, 1);
+    drawImageCover(bgCtx, rimCanvas, w, h);
+    bgCtx.restore();
+
+    // Draw crisp person on top
     bgCtx.save();
     bgCtx.translate(w, 0);
     bgCtx.scale(-1, 1);
     drawImageCover(bgCtx, scratchCanvas, w, h);
+    bgCtx.restore();
+
+    // Subtle warm screen-blend over person to warm up skin tones
+    bgCtx.save();
+    bgCtx.globalCompositeOperation = "screen";
+    bgCtx.globalAlpha = 0.09;
+    bgCtx.translate(w, 0);
+    bgCtx.scale(-1, 1);
+    drawImageCover(bgCtx, rimCanvas, w, h);
     bgCtx.restore();
 }
 
@@ -377,25 +599,35 @@ class Monster {
         this.image = loadedMonsterImages[this.monsterTypeIndex] || null;
         this.alive = true;
         this.points = config.pointsPerKill;
+
+        // Te Wheke (octopus) = Boss — larger and worth triple points
+        if (this.monsterTypeIndex === SPECIES.OCTOPUS) {
+            this.size *= 1.5;
+            this.points = config.pointsPerKill * 3;
+            this.isBoss = true;
+        } else {
+            this.isBoss = false;
+        }
     }
 
     spawnCornerGlide(config, opts = {}) {
         const fromLeft = opts.fromLeft ?? Math.random() > 0.5;
+        const sp = config.monsters.speed;
+        const vyMid = (sp.vyMin + sp.vyMax) / 2;
+        // Stage 1 baseline vyMid ≈ 4.2; faster stages get proportionally shorter travel time
         const travelFrames =
             opts.travelFrames ??
-            (config.id === 1
-                ? 175 + Math.floor(Math.random() * 55)
-                : 145 + Math.floor(Math.random() * 45));
+            Math.round((4.2 / vyMid) * (175 + Math.random() * 50));
         const gravityScale = opts.gravityScale ?? (config.id === 1 ? 0.18 : 0.22);
 
         // Spawn from bottom-left / bottom-right (slightly off-screen) and glide toward center.
-        const xEdge = fromLeft ? -this.size * 0.15 : canvas.width + this.size * 0.15;
-        const yEdge = canvas.height + this.size * (0.34 + Math.random() * 0.22);
+        const xEdge = fromLeft ? -this.size * 0.15 : gameW + this.size * 0.15;
+        const yEdge = gameH + this.size * (0.34 + Math.random() * 0.22);
 
         const targetX =
-            opts.targetX ?? canvas.width * (0.5 + (Math.random() - 0.5) * 0.18);
+            opts.targetX ?? gameW * (0.5 + (Math.random() - 0.5) * 0.18);
         const targetY =
-            opts.targetY ?? canvas.height * (0.46 + Math.random() * 0.08);
+            opts.targetY ?? gameH * (0.46 + Math.random() * 0.08);
 
         this.x = xEdge;
         this.y = yEdge;
@@ -413,7 +645,7 @@ class Monster {
         const fromLeft = Math.random() > 0.5;
         this.spawnCornerGlide(config, {
             fromLeft,
-            targetY: canvas.height * (0.48 + Math.random() * 0.06),
+            targetY: gameH * (0.48 + Math.random() * 0.06),
             gravityScale: 0.2
         });
         this.spin = (Math.random() - 0.5) * 0.004;
@@ -422,7 +654,7 @@ class Monster {
 
     spawnOctopusBob(config) {
         this.spawnCornerGlide(config, {
-            targetY: canvas.height * (0.46 + Math.random() * 0.1),
+            targetY: gameH * (0.46 + Math.random() * 0.1),
             gravityScale: 0.25
         });
         this.spin = (Math.random() - 0.5) * 0.016;
@@ -432,7 +664,7 @@ class Monster {
 
     spawnStarfishCreep(config) {
         this.spawnCornerGlide(config, {
-            targetY: canvas.height * (0.52 + Math.random() * 0.06),
+            targetY: gameH * (0.52 + Math.random() * 0.06),
             gravityScale: 0.18
         });
         this.rotation = Math.random() * Math.PI * 2;
@@ -442,7 +674,7 @@ class Monster {
         const fromLeft = Math.random() > 0.5;
         this.spawnCornerGlide(config, {
             fromLeft,
-            targetY: canvas.height * (0.42 + Math.random() * 0.12),
+            targetY: gameH * (0.42 + Math.random() * 0.12),
             gravityScale: 0.2
         });
         this.rotation = fromLeft ? -0.15 : 0.15;
@@ -453,7 +685,7 @@ class Monster {
         const fromLeft = Math.random() > 0.5;
         this.spawnCornerGlide(config, {
             fromLeft,
-            targetY: canvas.height * (0.46 + Math.random() * 0.12),
+            targetY: gameH * (0.46 + Math.random() * 0.12),
             gravityScale: 0.22
         });
     }
@@ -527,21 +759,23 @@ class Monster {
         if (this.x < this.size / 2) {
             this.x = this.size / 2;
             this.vx = Math.abs(this.vx);
-        } else if (this.x > canvas.width - this.size / 2) {
-            this.x = canvas.width - this.size / 2;
+        } else if (this.x > gameW - this.size / 2) {
+            this.x = gameW - this.size / 2;
             this.vx = -Math.abs(this.vx);
         }
 
         const out =
-            this.y > canvas.height + 420 ||
+            this.y > gameH + 420 ||
             this.y < -this.size - 220 ||
             this.x < -this.size - 200 ||
-            this.x > canvas.width + this.size + 200;
+            this.x > gameW + this.size + 200;
 
         if (out) {
-            if (this.y > canvas.height - 80) {
+            if (this.y > gameH - 80) {
                 gameState.lives--;
+                showComboBreak(gameState.combo);
                 gameState.combo = 0;
+                playLifeLostSound();
                 updateUI();
                 if (gameState.lives <= 0) endGame();
             }
@@ -634,81 +868,161 @@ class Monster {
 /**
  * Slash trail: line segments or cubic Bezier (Catmull-Rom smoothed)
  */
-class SlashTrail {
-    constructor(kind, hue, payload) {
-        this.kind = kind;
+/**
+ * Continuous Fruit-Ninja-style wrist trail.
+ * Stores recent positions and draws a single Catmull-Rom spline per frame,
+ * tapered from thin/transparent (tail) to thick/bright (tip).
+ */
+class WristTrail {
+    constructor(hue) {
         this.hue = hue;
-        this.life = 1;
-        this.decay = 0.042;
-        if (kind === "line") {
-            this.p0 = payload.p0;
-            this.p1 = payload.p1;
-        } else {
-            this.b0 = payload.b0;
-            this.b1 = payload.b1;
-            this.b2 = payload.b2;
-            this.b3 = payload.b3;
+        this.pts = [];
+        this.maxLen = 22;      // fewer stored points → cleaner curves
+        this.idleFrames = 0;
+        this.IDLE_DECAY = 5;
+        this._sx = null;       // internal EMA state (separate from hit-detection smoothRef)
+        this._sy = null;
+        this.EMA   = 0.20;     // lower = smoother trail (independent of hit detection)
+        this.MIN_D = 14;       // px: skip point if too close to last → no micro-jitter clusters
+    }
+
+    push(x, y) {
+        // Trail-specific EMA smoothing
+        if (this._sx === null) { this._sx = x; this._sy = y; }
+        else {
+            const a = this.EMA;
+            this._sx = a * x + (1 - a) * this._sx;
+            this._sy = a * y + (1 - a) * this._sy;
+        }
+        // Minimum-distance gate: skip if barely moved
+        const last = this.pts[this.pts.length - 1];
+        if (last && Math.hypot(this._sx - last.x, this._sy - last.y) < this.MIN_D) return;
+
+        this.pts.push({ x: this._sx, y: this._sy });
+        if (this.pts.length > this.maxLen) this.pts.shift();
+        this.idleFrames = 0;
+    }
+
+    // Call once per frame; erodes tail when wrist is idle
+    tick() {
+        this.idleFrames++;
+        if (this.idleFrames > this.IDLE_DECAY && this.pts.length > 0) {
+            this.pts.shift();
         }
     }
 
-    gradientEndpoints() {
-        if (this.kind === "line") {
-            return { x0: this.p0.x, y0: this.p0.y, x1: this.p1.x, y1: this.p1.y };
-        }
-        return { x0: this.b0.x, y0: this.b0.y, x1: this.b3.x, y1: this.b3.y };
+    clear() {
+        this.pts = [];
+        this.idleFrames = 0;
+        this._sx = null;
+        this._sy = null;
     }
 
-    path(ctx2) {
-        ctx2.beginPath();
-        if (this.kind === "line") {
-            ctx2.moveTo(this.p0.x, this.p0.y);
-            ctx2.lineTo(this.p1.x, this.p1.y);
-        } else {
-            ctx2.moveTo(this.b0.x, this.b0.y);
-            ctx2.bezierCurveTo(this.b1.x, this.b1.y, this.b2.x, this.b2.y, this.b3.x, this.b3.y);
+    // Laplacian smooth: each interior point averages with its neighbours
+    // Removes remaining angular corners before bezier rendering
+    _smooth(pts) {
+        const n = pts.length;
+        if (n < 3) return pts;
+        const out = [pts[0]];
+        for (let i = 1; i < n - 1; i++) {
+            out.push({
+                x: pts[i - 1].x * 0.25 + pts[i].x * 0.5 + pts[i + 1].x * 0.25,
+                y: pts[i - 1].y * 0.25 + pts[i].y * 0.5 + pts[i + 1].y * 0.25
+            });
         }
+        out.push(pts[n - 1]);
+        return out;
+    }
+
+    // Single render pass: Catmull-Rom bezier segments with tapered width + glow
+    _pass(ctx2, maxW, maxAlpha, lightness, hueShift) {
+        const pts = this._smooth(this.pts);  // smooth before rendering
+        const n = pts.length;
+        const h = (this.hue + hueShift) % 360;
+
+        ctx2.lineCap = "round";
+        ctx2.lineJoin = "round";
+        ctx2.strokeStyle = `hsl(${h},100%,${lightness}%)`;
+        ctx2.shadowColor  = `hsl(${h},100%,${Math.max(50, lightness - 18)}%)`;
+
+        for (let i = 1; i < n; i++) {
+            const t = i / (n - 1);     // 0 = oldest, 1 = newest
+            const ease = t * t;        // quadratic: tip is thick & bright
+            const w = ease * maxW + 0.5;
+            const a = ease * maxAlpha;
+            if (a < 0.015) continue;
+
+            // Catmull-Rom → Bezier control points
+            const p0 = pts[Math.max(0, i - 2)];
+            const p1 = pts[i - 1];
+            const p2 = pts[i];
+            const p3 = pts[Math.min(n - 1, i + 1)];
+            const cp1x = p1.x + (p2.x - p0.x) / 6;
+            const cp1y = p1.y + (p2.y - p0.y) / 6;
+            const cp2x = p2.x - (p3.x - p1.x) / 6;
+            const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+            ctx2.globalAlpha = a;
+            ctx2.lineWidth   = w;
+            ctx2.shadowBlur  = w * 0.9;
+            ctx2.beginPath();
+            ctx2.moveTo(p1.x, p1.y);
+            ctx2.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+            ctx2.stroke();
+        }
+    }
+
+    draw(ctx2) {
+        if (this.pts.length < 2) return;
+        ctx2.save();
+        // Outer glow
+        this._pass(ctx2, 42, 0.18, 62,  0);
+        // Mid color
+        this._pass(ctx2, 22, 0.55, 78, 15);
+        // Bright white core
+        this._pass(ctx2,  9, 0.96, 97,  8);
+        ctx2.restore();
+    }
+}
+
+// Initialise wrist trails now that WristTrail is defined
+gameState.leftTrail  = new WristTrail(195);
+gameState.rightTrail = new WristTrail(28);
+
+// Sparkle particles emitted along the slash trail when swinging fast
+class SwingSparkle {
+    constructor(x, y, hue, speed) {
+        this.x = x;
+        this.y = y;
+        this.hue = hue;
+        const spread = 0.9 + speed * 0.012;
+        const a = Math.random() * Math.PI * 2;
+        const sp = (1.2 + Math.random() * 3.8) * spread;
+        this.vx = Math.cos(a) * sp;
+        this.vy = Math.sin(a) * sp - 1.2;
+        this.size = 1.8 + Math.random() * 3.5;
+        this.life = 0.65 + Math.random() * 0.35;
     }
 
     update() {
-        this.life -= this.decay;
+        this.life -= 0.055;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.11;
+        this.vx *= 0.97;
         return this.life > 0;
     }
 
     draw(ctx2) {
-        const a = Math.min(1, this.life * 1.15);
-        const { x0, y0, x1, y1 } = this.gradientEndpoints();
-        const g = ctx2.createLinearGradient(x0, y0, x1, y1);
-        g.addColorStop(0, `hsla(${this.hue}, 98%, 58%, ${a})`);
-        g.addColorStop(0.5, `hsla(${(this.hue + 25) % 360}, 95%, 52%, ${a * 0.95})`);
-        g.addColorStop(1, `hsla(${(this.hue + 48) % 360}, 92%, 48%, ${a * 0.55})`);
-
+        const a = Math.min(1, this.life * 1.6);
         ctx2.save();
-        ctx2.lineCap = "round";
-        ctx2.lineJoin = "round";
-
-        ctx2.globalAlpha = a * 0.5;
-        ctx2.strokeStyle = `hsla(${this.hue}, 100%, 72%, 0.85)`;
-        ctx2.lineWidth = 44 * this.life;
-        ctx2.shadowColor = `hsla(${this.hue}, 100%, 62%, 1)`;
-        ctx2.shadowBlur = 48 * this.life;
-        this.path(ctx2);
-        ctx2.stroke();
-
-        ctx2.globalAlpha = a * 0.72;
-        ctx2.strokeStyle = g;
-        ctx2.lineWidth = 26 * this.life;
-        ctx2.shadowBlur = 28 * this.life;
-        this.path(ctx2);
-        ctx2.stroke();
-
         ctx2.globalAlpha = a;
-        ctx2.strokeStyle = `hsla(${(this.hue + 12) % 360}, 100%, 92%, 1)`;
-        ctx2.lineWidth = 11 * this.life;
-        ctx2.shadowColor = "#fff";
-        ctx2.shadowBlur = 18 * this.life;
-        this.path(ctx2);
-        ctx2.stroke();
-
+        ctx2.shadowColor = `hsla(${this.hue}, 100%, 80%, 1)`;
+        ctx2.shadowBlur = 10;
+        ctx2.fillStyle = `hsla(${this.hue}, 100%, 88%, 1)`;
+        ctx2.beginPath();
+        ctx2.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
+        ctx2.fill();
         ctx2.restore();
     }
 }
@@ -842,6 +1156,140 @@ class FloatScore {
     }
 }
 
+// ─── Error card ───────────────────────────────────────────────────────────────
+function showErrorCard(msg) {
+    if (errorMsgEl) errorMsgEl.textContent = msg;
+    if (errorCardEl) errorCardEl.classList.remove("hidden");
+}
+if (errorDismissBtn) errorDismissBtn.addEventListener("click", () => {
+    errorCardEl.classList.add("hidden");
+});
+
+// ─── Story card ───────────────────────────────────────────────────────────────
+function showStoryCard(stageIndex, onBegin) {
+    const story = STAGE_STORIES[stageIndex];
+    if (!story || !storyCardOverlay) { onBegin(); return; }
+    storyCardStageEl.textContent = story.stage;
+    storyCardTitleEl.textContent = story.title;
+    storyCardDescEl.textContent  = story.desc;
+    if (story.img) {
+        storyCardImgEl.src = story.img;
+        storyCardImgEl.classList.remove("hidden");
+    } else {
+        storyCardImgEl.classList.add("hidden");
+    }
+    storyCardOverlay.classList.remove("hidden");
+    const begin = () => {
+        storyCardOverlay.classList.add("hidden");
+        storyCardBeginBtn.removeEventListener("click", begin);
+        onBegin();
+    };
+    storyCardBeginBtn.addEventListener("click", begin);
+}
+
+// ─── Affirmation popup ────────────────────────────────────────────────────────
+function showAffirmation(x, y) {
+    const text = AFFIRMATIONS[Math.floor(Math.random() * AFFIRMATIONS.length)];
+    const el = document.createElement("div");
+    el.className = "affirmation-text";
+    el.textContent = text;
+    el.style.left = `${Math.min(Math.max(x - 60, 4), gameW - 140)}px`;
+    el.style.top  = `${Math.max(y - 70, 10)}px`;
+    document.getElementById("game-container").appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+}
+
+// ─── Kupe boss kill ───────────────────────────────────────────────────────────
+const KUPE_LINES = [
+    "You struck Te Wheke! Like Kupe!",
+    "Ka hinga Te Wheke! — The octopus falls!",
+    "Kupe's spirit is with you!",
+    "He toa! — A warrior!",
+];
+function showKupeVictory(x, y) {
+    const text = KUPE_LINES[Math.floor(Math.random() * KUPE_LINES.length)];
+    const el = document.createElement("div");
+    el.className = "affirmation-text kupe-victory";
+    el.textContent = text;
+    el.style.left = `${Math.min(Math.max(x - 80, 4), gameW - 200)}px`;
+    el.style.top  = `${Math.max(y - 90, 10)}px`;
+    document.getElementById("game-container").appendChild(el);
+    setTimeout(() => el.remove(), 2200);
+}
+
+// ─── Combo break feedback ─────────────────────────────────────────────────────
+function showComboBreak(combo) {
+    if (combo < 3) return;
+    const el = document.createElement("div");
+    el.className = "combo-break-text";
+    el.textContent = "Combo broken!";
+    el.style.left = `${gameW / 2 - 70}px`;
+    el.style.top  = `${gameH * 0.38}px`;
+    document.getElementById("game-container").appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+}
+
+// ─── Ambient ocean music ──────────────────────────────────────────────────────
+let _ambienceNodes = [];
+function startAmbience() {
+    stopAmbience();
+    const ctx2 = audioCtx();
+    const bufLen = ctx2.sampleRate * 3;
+    const buf = ctx2.createBuffer(1, bufLen, ctx2.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+
+    const src = ctx2.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+
+    const lpf = ctx2.createBiquadFilter();
+    lpf.type = "lowpass";
+    lpf.frequency.value = 320;
+    lpf.Q.value = 0.8;
+
+    const gain = ctx2.createGain();
+    gain.gain.value = 0.06;
+
+    src.connect(lpf);
+    lpf.connect(gain);
+    gain.connect(ctx2.destination);
+    src.start();
+    _ambienceNodes = [src, lpf, gain];
+}
+function stopAmbience() {
+    _ambienceNodes.forEach(n => { try { n.disconnect(); if (n.stop) n.stop(); } catch (_) {} });
+    _ambienceNodes = [];
+}
+
+// ─── Camera badge ─────────────────────────────────────────────────────────────
+function showCameraBadge() { cameraBadgeEl && cameraBadgeEl.classList.remove("hidden"); }
+function hideCameraBadge() { cameraBadgeEl && cameraBadgeEl.classList.add("hidden"); }
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
+function showEmptyState() { emptyStateEl && emptyStateEl.classList.remove("hidden"); }
+function hideEmptyState() { emptyStateEl && emptyStateEl.classList.add("hidden"); }
+
+// ─── Instruction bar ──────────────────────────────────────────────────────────
+function showInstructionBar() { instructionBarEl && instructionBarEl.classList.remove("hidden"); }
+function hideInstructionBar() { instructionBarEl && instructionBarEl.classList.add("hidden"); }
+
+// ─── ESC to return to start ───────────────────────────────────────────────────
+function returnToStart() {
+    gameState.isPlaying = false;
+    stopAmbience();
+    hideCameraBadge();
+    hideInstructionBar();
+    hideEmptyState();
+    [stageCompleteScreen, gameCompleteScreen, gameOverScreen,
+     storyCardOverlay].forEach(el => el && el.classList.add("hidden"));
+    startScreen.classList.remove("hidden");
+}
+window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && gameState.isPlaying) returnToStart();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 function updateUI() {
     const sum = gameState.totalScore + gameState.stageScore;
     scoreEl.textContent = sum;
@@ -850,6 +1298,11 @@ function updateUI() {
     targetEl.textContent = `${gameState.stageScore}/${config.targetScore}`;
     comboEl.textContent = gameState.combo;
     livesEl.textContent = gameState.lives;
+    livesEl.classList.toggle("lives-danger", gameState.lives <= 2);
+    if (progressFillEl) {
+        const pct = Math.min(100, (gameState.stageScore / config.targetScore) * 100);
+        progressFillEl.style.width = pct + "%";
+    }
 }
 
 function showComboText(x, y, text) {
@@ -941,6 +1394,10 @@ function hideGripHintBar() {
 
 function showStageComplete() {
     hideGripHintBar();
+    hideCameraBadge();
+    hideInstructionBar();
+    hideEmptyState();
+    playStageCompleteSound();
     completedStageEl.textContent = gameState.currentStage + 1;
     stageScoreEl.textContent = gameState.stageScore;
     stageCompleteScreen.classList.remove("hidden");
@@ -948,6 +1405,11 @@ function showStageComplete() {
 
 function showGameComplete() {
     hideGripHintBar();
+    hideCameraBadge();
+    hideInstructionBar();
+    hideEmptyState();
+    stopAmbience();
+    playStageCompleteSound();
     totalScoreEl.textContent = gameState.totalScore;
     gameCompleteScreen.classList.remove("hidden");
 }
@@ -955,6 +1417,11 @@ function showGameComplete() {
 function endGame() {
     gameState.isPlaying = false;
     hideGripHintBar();
+    hideCameraBadge();
+    hideInstructionBar();
+    hideEmptyState();
+    stopAmbience();
+    playGameOverSound();
     reachedStageEl.textContent = gameState.currentStage + 1;
     finalScoreEl.textContent = gameState.totalScore + gameState.stageScore;
     gameOverScreen.classList.remove("hidden");
@@ -1023,10 +1490,18 @@ function tryHitMonsterAt(px, py, hitIds) {
             gameState.stageScore += points;
             gameState.killBursts.push(new KillBurst(monster.x, monster.y));
             gameState.floatTexts.push(new FloatScore(monster.x, monster.y - 42, `+${points}`));
+            playHitSound(comboTier);
+            gameState.weaponHitFlash = 9;
+            if (monster.isBoss) {
+                showKupeVictory(monster.x, monster.y);
+            } else {
+                showAffirmation(monster.x, monster.y);
+            }
             updateUI();
             checkStageComplete();
             if (gameState.combo >= 3) {
                 showComboText(monster.x, monster.y, `${gameState.combo} combo`);
+                playComboSound(gameState.combo);
             }
         } else if (dist2 < rNear * rNear) {
             // Near miss feedback: visual only (does not affect score/lives)
@@ -1063,9 +1538,9 @@ function sampleHitsAlongCubic(b0, b1, b2, b3) {
 }
 
 /**
- * Exponential smoothing + Catmull-Rom cubic slash; two points stay a line
+ * Exponential smoothing + hit detection; rendering is handled by WristTrail.
  */
-function processWristSlash(history, x, y, hue, smoothRef) {
+function processWristSlash(history, x, y, hue, smoothRef, trail) {
     let px = x;
     let py = y;
     if (smoothRef.x != null && smoothRef.y != null) {
@@ -1076,6 +1551,8 @@ function processWristSlash(history, x, y, hue, smoothRef) {
     smoothRef.x = px;
     smoothRef.y = py;
 
+    trail.push(px, py);   // feed continuous trail
+
     history.push({ x: px, y: py });
     while (history.length > WRIST_HISTORY_MAX) history.shift();
 
@@ -1084,8 +1561,8 @@ function processWristSlash(history, x, y, hue, smoothRef) {
         const b = history[1];
         const dist = Math.hypot(b.x - a.x, b.y - a.y);
         if (dist < MIN_SLASH_LEN) return;
-        gameState.slashTrails.push(new SlashTrail("line", hue, { p0: a, p1: b }));
         sampleHitsAlongLine(a.x, a.y, b.x, b.y);
+        emitSwingSparkles(a.x, a.y, b.x, b.y, dist, hue);
         return;
     }
 
@@ -1098,12 +1575,21 @@ function processWristSlash(history, x, y, hue, smoothRef) {
 
         const p3 = { x: p2.x + (p2.x - p1.x), y: p2.y + (p2.y - p1.y) };
         const bez = catmullRomSegmentToBezier(p0, p1, p2, p3);
-
-        gameState.slashTrails.push(
-            new SlashTrail("cubic", hue, { b0: bez.b0, b1: bez.b1, b2: bez.b2, b3: bez.b3 })
-        );
         sampleHitsAlongCubic(bez.b0, bez.b1, bez.b2, bez.b3);
+        emitSwingSparkles(p1.x, p1.y, p2.x, p2.y, segMove, hue);
     }
+}
+
+// Spawn sparkle particles along the slash segment; play whoosh above speed threshold.
+function emitSwingSparkles(x0, y0, x1, y1, dist, hue) {
+    const count = Math.min(10, Math.floor(dist / 18));
+    for (let i = 0; i < count; i++) {
+        const t = i / Math.max(1, count - 1);
+        gameState.swingSparkles.push(
+            new SwingSparkle(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, hue, dist)
+        );
+    }
+    if (dist > 55) playSwingSound(dist);
 }
 
 function smoothAngleRad(prev, next, t) {
@@ -1200,7 +1686,9 @@ function smoothWeaponPose(prev, raw) {
     const al = prev.armLen * 0.52 + raw.armLen * 0.48;
     let angle = computeWeaponAngle(raw.ex, raw.ey, wx, wy, vx, vy, raw.isLeft);
     angle = smoothAngleRad(prev.angle, angle, 0.4);
-    return { wx, wy, angle, armLen: al, ex: raw.ex, ey: raw.ey, isLeft: raw.isLeft, vx, vy };
+    // Keep last 4 positions for motion-blur trail
+    const trail = [{ wx: prev.wx, wy: prev.wy, angle: prev.angle }, ...(prev.trail || [])].slice(0, 4);
+    return { wx, wy, angle, armLen: al, ex: raw.ex, ey: raw.ey, isLeft: raw.isLeft, vx, vy, trail };
 }
 
 /**
@@ -1214,12 +1702,12 @@ function updateWeaponHandPose(landmarks) {
         const e = L[ehi];
         const w = L[whi];
         if (!landmarkVisible(w) || !landmarkVisible(e) || !landmarkVisible(s)) return null;
-        const sx = (1 - s.x) * canvas.width;
-        const sy = s.y * canvas.height;
-        const ex = (1 - e.x) * canvas.width;
-        const ey = e.y * canvas.height;
-        const wx = (1 - w.x) * canvas.width;
-        const wy = w.y * canvas.height;
+        const sx = (1 - s.x) * gameW;
+        const sy = s.y * gameH;
+        const ex = (1 - e.x) * gameW;
+        const ey = e.y * gameH;
+        const wx = (1 - w.x) * gameW;
+        const wy = w.y * gameH;
         const dx = wx - ex;
         const dy = wy - ey;
         const armLen = Math.hypot(dx, dy) || 1;
@@ -1262,8 +1750,8 @@ function weaponBladeTiltAdditive(wcfg, pose, flip) {
 }
 
 function weaponDisplayWidthPx(armLen) {
-    const cw = canvas.width || 800;
-    const maxW = Math.min(340, cw * 0.3);
+    const cw = gameW || 800;
+    const maxW = Math.min(480, cw * 0.46);
     let bw = armLen * WEAPON_FOREARM_RATIO;
     bw = Math.max(WEAPON_MIN_WIDTH_PX, Math.min(maxW, bw));
     return bw;
@@ -1275,31 +1763,83 @@ function drawHeldWeapons(ctx2) {
     const img = loadedWeapons[gameState.selectedWeaponIndex];
     if (!img || !img.complete || !img.naturalWidth) return;
 
+    _gleamTick = (_gleamTick + 1) % 200;
+
     const drawOne = (pose, flip) => {
         if (!pose) return;
-        const { wx, wy, angle, armLen } = pose;
+        const { wx, wy, angle, armLen, vx, vy } = pose;
+        const sp = Math.hypot(vx || 0, vy || 0);
+
         let bw = weaponDisplayWidthPx(armLen || 200) * wcfg.scale;
-        const cw = canvas.width || 800;
-        bw = Math.min(bw, Math.min(340, cw * 0.3));
+        const cw = gameW || 800;
+        bw = Math.min(bw, Math.min(480, cw * 0.46));
         const bh = (img.naturalHeight / img.naturalWidth) * bw;
+        const tilt = weaponBladeTiltAdditive(wcfg, pose, flip);
+        const totalAngle = angle + wcfg.angleOffset + tilt;
         const ax = wcfg.anchorX * bw;
         const ay = wcfg.anchorY * bh;
 
+        // ── 1. Motion-blur ghost trail ────────────────────────────────
+        const trail = pose.trail || [];
+        trail.forEach((t, i) => {
+            const a = 0.16 - i * 0.038;
+            if (a <= 0) return;
+            const sc = 1 - i * 0.025;
+            ctx2.save();
+            ctx2.globalAlpha = a;
+            ctx2.translate(t.wx, t.wy);
+            ctx2.rotate(t.angle + wcfg.angleOffset + tilt);
+            if (flip) ctx2.scale(-1, 1);
+            ctx2.drawImage(img, -ax * sc, -ay * sc, bw * sc, bh * sc);
+            ctx2.restore();
+        });
+
+        // ── 2. Main weapon (slight speed-scale boost) ─────────────────
+        const speedBoost = 1 + Math.min(sp / 260, 0.10);
+        const dbw = bw * speedBoost, dbh = bh * speedBoost;
+        const dax = ax * speedBoost, day = ay * speedBoost;
+
         ctx2.save();
         ctx2.translate(wx, wy);
-        const tilt = weaponBladeTiltAdditive(wcfg, pose, flip);
-        ctx2.rotate(angle + wcfg.angleOffset + tilt);
+        ctx2.rotate(totalAngle);
         if (flip) ctx2.scale(-1, 1);
 
-        ctx2.fillStyle = "rgba(0,0,0,0.2)";
-        ctx2.beginPath();
-        ctx2.ellipse(6, 16, bw * 0.36, 13, 0, 0, Math.PI * 2);
-        ctx2.fill();
+        ctx2.shadowColor = "rgba(0,0,0,0.55)";
+        ctx2.shadowBlur = 14;
+        ctx2.shadowOffsetX = 3;
+        ctx2.shadowOffsetY = 5;
+        ctx2.drawImage(img, -dax, -day, dbw, dbh);
+        ctx2.shadowColor = "transparent";
+        ctx2.shadowBlur = 0;
+        ctx2.shadowOffsetX = 0;
+        ctx2.shadowOffsetY = 0;
 
-        ctx2.shadowColor = "rgba(0,0,0,0.48)";
-        ctx2.shadowBlur = 20;
-        ctx2.shadowOffsetY = 7;
-        ctx2.drawImage(img, -ax, -ay, bw, bh);
+        // ── 3. Periodic blade gleam (diagonal light sweep) ────────────
+        const gPhase = _gleamTick / 200;   // 0..1
+        if (gPhase < 0.22) {
+            const gp  = gPhase / 0.22;    // 0..1 within gleam window
+            const gAlpha = Math.sin(gp * Math.PI) * 0.45;
+            const sweepX = -dax + dbw * gp;
+            const halfW  = dbw * 0.28;
+            const grad = ctx2.createLinearGradient(sweepX - halfW, -day, sweepX + halfW, -day + dbh * 0.6);
+            grad.addColorStop(0,   `rgba(255,255,255,0)`);
+            grad.addColorStop(0.5, `rgba(255,255,255,${gAlpha})`);
+            grad.addColorStop(1,   `rgba(255,255,255,0)`);
+            ctx2.globalCompositeOperation = "lighter";
+            ctx2.fillStyle = grad;
+            ctx2.fillRect(-dax, -day, dbw, dbh * 0.62);
+            ctx2.globalCompositeOperation = "source-over";
+        }
+
+        // ── 4. Hit flash: bright white overlay on kill ────────────────
+        if (gameState.weaponHitFlash > 0) {
+            const flashA = (gameState.weaponHitFlash / 9) * 0.72;
+            ctx2.globalCompositeOperation = "lighter";
+            ctx2.globalAlpha = flashA;
+            ctx2.drawImage(img, -dax, -day, dbw, dbh);
+            ctx2.globalCompositeOperation = "source-over";
+            ctx2.globalAlpha = 1;
+        }
 
         ctx2.restore();
     };
@@ -1308,7 +1848,12 @@ function drawHeldWeapons(ctx2) {
     drawOne(gameState.weaponPoseSmooth.right, false);
 }
 
+let _poseReady = false;
 function onResults(results) {
+    if (!_poseReady && results.poseLandmarks) {
+        _poseReady = true;
+        if (loadingOverlay) loadingOverlay.classList.add("hidden");
+    }
     drawVirtualBackground(results);
 
     if (results.poseLandmarks && gameState.isPlaying) {
@@ -1326,20 +1871,21 @@ function onResults(results) {
     const leftWrist = landmarks[15];
     const rightWrist = landmarks[16];
 
-    const lx = (1 - leftWrist.x) * canvas.width;
-    const ly = leftWrist.y * canvas.height;
-    const rx = (1 - rightWrist.x) * canvas.width;
-    const ry = rightWrist.y * canvas.height;
+    const lx = (1 - leftWrist.x) * gameW;
+    const ly = leftWrist.y * gameH;
+    const rx = (1 - rightWrist.x) * gameW;
+    const ry = rightWrist.y * gameH;
 
     if (landmarkVisible(leftWrist)) {
-        processWristSlash(gameState.leftWristHistory, lx, ly, 195, gameState.leftWristSmooth);
+        processWristSlash(gameState.leftWristHistory, lx, ly, 195, gameState.leftWristSmooth, gameState.leftTrail);
     } else {
         gameState.leftWristHistory = [];
         gameState.leftWristSmooth = { x: null, y: null };
+        // trail fades naturally via tick()
     }
 
     if (landmarkVisible(rightWrist)) {
-        processWristSlash(gameState.rightWristHistory, rx, ry, 28, gameState.rightWristSmooth);
+        processWristSlash(gameState.rightWristHistory, rx, ry, 28, gameState.rightWristSmooth, gameState.rightTrail);
     } else {
         gameState.rightWristHistory = [];
         gameState.rightWristSmooth = { x: null, y: null };
@@ -1349,7 +1895,7 @@ function onResults(results) {
 function gameLoop() {
     if (!gameState.isPlaying) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, gameW, gameH);
 
     gameState.monsters = gameState.monsters.filter((monster) => {
         if (!monster.alive) return false;
@@ -1358,11 +1904,16 @@ function gameLoop() {
         return onScreen;
     });
 
-    gameState.slashTrails = gameState.slashTrails.filter((trail) => {
-        const alive = trail.update();
-        if (alive) trail.draw(ctx);
-        return alive;
-    });
+    // Show empty-state hint between waves when no monsters are visible
+    if (emptyStateEl) {
+        const hasVisible = gameState.monsters.some(m => m.alive);
+        emptyStateEl.classList.toggle("hidden", hasVisible);
+    }
+
+    gameState.leftTrail.tick();
+    gameState.rightTrail.tick();
+    gameState.leftTrail.draw(ctx);
+    gameState.rightTrail.draw(ctx);
 
     gameState.killBursts = gameState.killBursts.filter((b) => {
         const alive = b.update();
@@ -1382,6 +1933,15 @@ function gameLoop() {
         return alive;
     });
 
+    gameState.swingSparkles = gameState.swingSparkles.filter((s) => {
+        const alive = s.update();
+        if (alive) s.draw(ctx);
+        return alive;
+    });
+
+    if (_swingSoundCooldown > 0) _swingSoundCooldown--;
+    if (gameState.weaponHitFlash > 0) gameState.weaponHitFlash--;
+
     drawHeldWeapons(ctx);
 
     requestAnimationFrame(gameLoop);
@@ -1394,10 +1954,12 @@ function initStage(stageIndex) {
     gameState.combo = 0;
     gameState.lives = config.lives;
     gameState.monsters = [];
-    gameState.slashTrails = [];
+    gameState.leftTrail.clear();
+    gameState.rightTrail.clear();
     gameState.killBursts = [];
     gameState.nearHitBursts = [];
     gameState.floatTexts = [];
+    gameState.swingSparkles = [];
     gameState.leftWristHistory = [];
     gameState.rightWristHistory = [];
     gameState.leftWristSmooth = { x: null, y: null };
@@ -1409,30 +1971,37 @@ function initStage(stageIndex) {
 }
 
 async function startGame() {
-    await preloadImages();
     gameState.totalScore = 0;
     initStage(0);
-    gameState.isPlaying = true;
     startScreen.classList.add("hidden");
     stageCompleteScreen.classList.add("hidden");
     gameCompleteScreen.classList.add("hidden");
     gameOverScreen.classList.add("hidden");
 
-    showGripHintBar();
-
-    spawnMonster();
-    gameLoop();
+    showStoryCard(0, () => {
+        gameState.isPlaying = true;
+        startAmbience();
+        showCameraBadge();
+        showInstructionBar();
+        showGripHintBar();
+        spawnMonster();
+        gameLoop();
+    });
 }
 
 function nextStage() {
-    initStage(gameState.currentStage + 1);
-    gameState.isPlaying = true;
+    const nextIndex = gameState.currentStage + 1;
+    initStage(nextIndex);
     stageCompleteScreen.classList.add("hidden");
 
-    showGripHintBar();
-
-    spawnMonster();
-    gameLoop();
+    showStoryCard(nextIndex, () => {
+        gameState.isPlaying = true;
+        showCameraBadge();
+        showInstructionBar();
+        showGripHintBar();
+        spawnMonster();
+        gameLoop();
+    });
 }
 
 function enableStartAfterCamera() {
@@ -1471,6 +2040,8 @@ function buildWeaponPicker() {
 }
 
 async function init() {
+    preloadImages();
+
     const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }
     });
@@ -1526,12 +2097,13 @@ async function init() {
 
 init().catch((err) => {
     console.error(err);
+    if (loadingOverlay) loadingOverlay.classList.add("hidden");
     const cameraStatusEl = document.getElementById("camera-status");
     if (cameraStatusEl) {
         cameraStatusEl.textContent =
             "Camera unavailable. Allow camera access in browser settings, then refresh.";
     }
-    alert(
-        "Could not open the camera or load the pose model. Check camera permission and your network (MediaPipe scripts load from the web)."
+    showErrorCard(
+        "Could not open camera or load the pose model. Check camera permission and your network connection."
     );
 });
