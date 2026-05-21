@@ -57,7 +57,7 @@ const STAGE_CONFIGS = [
         name: "Final abyss",
         targetScore: 520,
         lives: 5,
-        background: "img/background02.png",
+        background: "img/background03.png",
         monsters: {
             size: { min: 78, max: 130 },
             speed: { vx: 0.70, vyMin: 5.0, vyMax: 8.2 },
@@ -102,6 +102,101 @@ const STAGE_STORIES = [
     }
 ];
 
+/**
+ * Extended stage metadata for the journey overview screen.
+ * Indices align 1-to-1 with STAGE_CONFIGS.
+ */
+const STAGE_OVERVIEW = [
+    {
+        maoiName: "Te Tirohanga",
+        subtitle: "Relaxed Exploration",
+        desc: "Gentle movements to wake the body. Watch the shore and follow slow creatures.",
+        minutes: 5,
+        motto: "Kia tūpato — Stay Alert",
+        cardImg: "img/story-card/1-Relaxed Exploration.png",
+        details: [
+            { label: "Creatures per wave",  value: "1 – 2",        icon: "wave" },
+            { label: "Speed",               value: "Calm",          icon: "feather" },
+            { label: "Creature size",       value: "Large",         icon: "resize" },
+            { label: "Points per creature", value: "10 pts",        icon: "star" },
+            { label: "Lives",               value: "7  —  room to learn", icon: "heart" }
+        ]
+    },
+    {
+        maoiName: "Te Tipuranga",
+        subtitle: "Steady Growth",
+        desc: "Build strength and steady rhythm. Creatures move with more spirit.",
+        minutes: 6,
+        motto: "Kia kaha — Stay Strong",
+        cardImg: "img/story-card/2-Steady Growth.png",
+        details: [
+            { label: "Creatures per wave",  value: "1 – 3",        icon: "wave" },
+            { label: "Speed",               value: "Moderate",      icon: "run" },
+            { label: "Creature size",       value: "Medium",        icon: "resize" },
+            { label: "Points per creature", value: "15 pts",        icon: "star" },
+            { label: "Lives",               value: "7  —  stay steady",   icon: "heart" }
+        ]
+    },
+    {
+        maoiName: "Te Wero",
+        subtitle: "Focused Challenge",
+        desc: "Sharpen your aim and your mind. Patterns shift — stay aware.",
+        minutes: 7,
+        motto: "Wero Tino — Focused Challenge",
+        cardImg: "img/story-card/3-Focused Challenge.png",
+        details: [
+            { label: "Creatures per wave",  value: "2 – 4",        icon: "wave" },
+            { label: "Speed",               value: "Fast",          icon: "bolt" },
+            { label: "Creature size",       value: "Smaller",       icon: "resize" },
+            { label: "Points per creature", value: "20 pts",        icon: "star" },
+            { label: "Lives",               value: "6  —  fewer mistakes", icon: "heart" }
+        ]
+    },
+    {
+        maoiName: "Te Toa Whakamutunga",
+        subtitle: "Final Strike",
+        desc: "Stand as a kaitiaki. Protect your people with full heart.",
+        minutes: 8,
+        motto: "Ngāwhatu Kai-ponu — Final Strike",
+        cardImg: "img/story-card/4-Final Strike.png",
+        details: [
+            { label: "Creatures per wave",  value: "2 – 5",        icon: "wave" },
+            { label: "Speed",               value: "Fierce",        icon: "flame" },
+            { label: "Creature size",       value: "Smallest",      icon: "resize" },
+            { label: "Points per creature", value: "28 pts",        icon: "star" },
+            { label: "Lives",               value: "5  —  every hit counts", icon: "heart" }
+        ]
+    }
+];
+
+/**
+ * Narrative text shown on the journey overview screen.
+ * One entry per completed-stage milestone (index = completedCount, capped at 3).
+ */
+const STAGE_NARRATIVES = [
+    // 0 stages done — before the journey begins
+    "Long ago, Kupe sailed these waters and defeated the great Te Wheke-a-Muturangi. " +
+    "Now the sea stirs again. Creatures rise from the deep, drawn by an ancient restlessness. " +
+    "Your people watch from the shore. Raise your weapon — the haerenga begins.",
+
+    // 1 stage done — shallow waters cleared
+    "The shallows are yours. The creatures scatter, but deeper currents carry darker things. " +
+    "Word spreads along the coast: a warrior has answered the sea's challenge. " +
+    "The surf zone churns ahead — move with strength and do not slow down.",
+
+    // 2 stages done — surf zone cleared
+    "Two battles won. The ocean respects your arms now. " +
+    "Below the surf, cold currents carry faster, fiercer creatures toward the shore. " +
+    "Tangaroa watches. He tests those who would call themselves toa. " +
+    "Focus your mind — the deep current does not forgive hesitation.",
+
+    // 3 stages done — one final clash remains
+    "Three victories. The people sing your name on the shore. " +
+    "But in the abyss, something ancient stirs — Te Wheke-a-Muturangi itself, " +
+    "the beast Kupe once drove from these waters. It remembers. " +
+    "This is your final stand. Strike with everything, kia kaha."
+];
+
 const MIN_SLASH_LEN = 20;
 const WRIST_HISTORY_MAX = 18;
 /** Exponential smoothing: higher = snappier, lower = smoother */
@@ -131,10 +226,19 @@ const monsterImages = [
  * bladeSwingFactor: extra alignment to instant velocity (0–1)
  */
 const WEAPONS = [
-    { noWeapon: true, label: "None" },
+    {
+        noWeapon: true,
+        label: "Hands",
+        maoiLabel: "Ringaringa",
+        desc: "Pure movement — glowing hand trails follow every swing",
+        color: "#48cae4"
+    },
     {
         path: "img/weapon/knif.png",
         label: "Knife",
+        maoiLabel: "Maripi",
+        desc: "Fast, precise slashes — blue energy trails on every strike",
+        color: "#90e0ef",
         angleOffset: 1.14,
         anchorX: 0.5,
         anchorY: 0.84,
@@ -145,6 +249,9 @@ const WEAPONS = [
     {
         path: "img/weapon/axe.png",
         label: "Axe",
+        maoiLabel: "Toki",
+        desc: "Wide, heavy sweeps — devastating arcing strikes with real weight",
+        color: "#ffd166",
         angleOffset: 0.98,
         anchorX: 0.5,
         anchorY: 0.86,
@@ -311,7 +418,8 @@ let gameState = {
     selectedWeaponIndex: 0,
     weaponPoseSmooth: { left: null, right: null },
     weaponHitFlash: 0,
-    gripHintTimer: null
+    gripHintTimer: null,
+    spawnTimerId: null   // tracks pending spawnMonster setTimeout so it can be cancelled
 };
 
 const canvas = document.getElementById("game-canvas");
@@ -501,32 +609,30 @@ function drawVirtualBackground(results) {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-async function preloadMonsterImages() {
-    for (const src of monsterImages) {
+/** Load a single image; always resolves (errors are silently ignored so one
+ *  missing asset doesn't block the rest). */
+function loadImage(src) {
+    return new Promise((resolve) => {
         const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(img);   // keep the (broken) img so indices stay aligned
         img.src = src;
-        await new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
-        });
-        loadedMonsterImages.push(img);
-    }
+    });
+}
+
+async function preloadMonsterImages() {
+    // Fire all requests in parallel; preserve original order via Promise.all
+    const imgs = await Promise.all(monsterImages.map(loadImage));
+    loadedMonsterImages.push(...imgs);
 }
 
 async function preloadWeaponImages() {
-    for (const w of WEAPONS) {
-        if (w.noWeapon) {
-            loadedWeapons.push(null);
-            continue;
-        }
-        const img = new Image();
-        img.src = w.path;
-        await new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
-        });
-        loadedWeapons.push(img);
-    }
+    // Build a parallel task for each slot (null placeholder for noWeapon entries)
+    const tasks = WEAPONS.map((w) =>
+        w.noWeapon ? Promise.resolve(null) : loadImage(w.path)
+    );
+    const imgs = await Promise.all(tasks);
+    loadedWeapons.push(...imgs);
 }
 
 async function preloadImages() {
@@ -1187,6 +1293,110 @@ function showStoryCard(stageIndex, onBegin) {
     storyCardBeginBtn.addEventListener("click", begin);
 }
 
+// ─── Stage overview / journey map ────────────────────────────────────────────
+/**
+ * Show the journey overview screen.
+ * @param {number}   completedCount  How many stages are already done (0–4)
+ * @param {function} onBegin         Called with no args when player clicks a stage card;
+ *                                   initStage() is called internally before onBegin().
+ */
+function showStageOverview(completedCount, onBegin) {
+    const screen = document.getElementById("stage-overview-screen");
+    if (!screen) { onBegin(); return; }   // graceful fallback if HTML isn't present
+
+    // ── Progress bar ──────────────────────────────────────────────────────────
+    const fillEl = document.getElementById("ov-prog-fill");
+    const textEl = document.getElementById("ov-prog-text");
+    const pct = Math.round((completedCount / STAGE_CONFIGS.length) * 100);
+    if (fillEl) fillEl.style.width = pct + "%";
+    if (textEl) textEl.textContent =
+        `${completedCount} OF ${STAGE_CONFIGS.length} COMPLETE`;
+
+    // ── Story narrative ───────────────────────────────────────────────────────
+    const storyEl = document.getElementById("ov-story");
+    if (storyEl) {
+        const narrativeIdx = Math.min(completedCount, STAGE_NARRATIVES.length - 1);
+        storyEl.textContent = STAGE_NARRATIVES[narrativeIdx];
+    }
+
+    // ── Build stage cards ─────────────────────────────────────────────────────
+    const cardsEl = document.getElementById("ov-cards");
+    if (!cardsEl) { screen.classList.remove("hidden"); return; }
+    cardsEl.innerHTML = "";
+
+    STAGE_CONFIGS.forEach((cfg, i) => {
+        const info = STAGE_OVERVIEW[i];
+        const cardState = i < completedCount ? "done"
+                        : i === completedCount  ? "active"
+                        : "locked";
+
+        const card = document.createElement("div");
+        card.className = `ov-card ov-card--${cardState}`;
+        card.setAttribute("aria-label",
+            `Stage ${i + 1}: ${info.maoiName} — ${cardState}`);
+
+        const detailsHTML = (info.details || []).map(d => `
+            <li class="ov-detail-row">
+                <span class="ov-detail-label">${d.label}</span>
+                <span class="ov-detail-value">${d.value}</span>
+            </li>`).join("");
+
+        card.innerHTML = `
+            <div class="ov-img" style="background-image:url('${info.cardImg || cfg.background}')">
+                <span class="ov-num">${i + 1}</span>
+                <span class="ov-motto">${info.motto}</span>
+                ${cardState === "locked"
+                    ? '<span class="ov-lock" aria-hidden="true">🔒</span>'
+                    : ""}
+                ${cardState === "done"
+                    ? '<span class="ov-check" aria-hidden="true">✓</span>'
+                    : ""}
+            </div>
+            <div class="ov-body">
+                <h3 class="ov-name">${info.maoiName}</h3>
+                <p class="ov-subtitle">${info.subtitle}</p>
+                <p class="ov-desc">${info.desc}</p>
+                <div class="ov-meta">
+                    <span class="ov-time">⏱ ${info.minutes} min</span>
+                    <span class="ov-pts">🎯 ${cfg.targetScore} pts</span>
+                </div>
+                <ul class="ov-details" aria-label="Stage details">
+                    ${detailsHTML}
+                </ul>
+                <div class="ov-action">
+                    ${cardState === "done"
+                        ? '<span class="ov-complete-label">Ka pai! · Complete</span>'
+                        : ""}
+                    ${cardState === "active"
+                        ? `<button type="button" class="ov-begin-btn" data-index="${i}">Timata — Begin →</button>`
+                        : ""}
+                    ${cardState === "locked"
+                        ? '<span class="ov-locked-label">Kei muri · Locked</span>'
+                        : ""}
+                </div>
+            </div>`;
+
+        cardsEl.appendChild(card);
+    });
+
+    // ── Wire up begin buttons ─────────────────────────────────────────────────
+    cardsEl.querySelectorAll(".ov-begin-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            screen.classList.add("hidden");
+            const idx = parseInt(btn.dataset.index, 10);
+            initStage(idx);
+            onBegin();
+        });
+    });
+
+    screen.classList.remove("hidden");
+}
+
+function hideStageOverview() {
+    const screen = document.getElementById("stage-overview-screen");
+    if (screen) screen.classList.add("hidden");
+}
+
 // ─── Affirmation popup ────────────────────────────────────────────────────────
 function showAffirmation(x, y) {
     const text = AFFIRMATIONS[Math.floor(Math.random() * AFFIRMATIONS.length)];
@@ -1277,12 +1487,14 @@ function hideInstructionBar() { instructionBarEl && instructionBarEl.classList.a
 // ─── ESC to return to start ───────────────────────────────────────────────────
 function returnToStart() {
     gameState.isPlaying = false;
+    cancelSpawnTimer();
     stopAmbience();
     hideCameraBadge();
     hideInstructionBar();
     hideEmptyState();
     [stageCompleteScreen, gameCompleteScreen, gameOverScreen,
      storyCardOverlay].forEach(el => el && el.classList.add("hidden"));
+    hideStageOverview();
     startScreen.classList.remove("hidden");
 }
 window.addEventListener("keydown", (e) => {
@@ -1322,6 +1534,7 @@ function setBackground(imagePath) {
 }
 
 function spawnMonster() {
+    gameState.spawnTimerId = null;
     if (!gameState.isPlaying) return;
     const config = STAGE_CONFIGS[gameState.currentStage];
     const aliveCount = gameState.monsters.filter((m) => m.alive).length;
@@ -1346,13 +1559,22 @@ function spawnMonster() {
     const interval =
         config.monsters.spawnInterval.min +
         Math.random() * (config.monsters.spawnInterval.max - config.monsters.spawnInterval.min);
-    setTimeout(spawnMonster, interval);
+    gameState.spawnTimerId = setTimeout(spawnMonster, interval);
+}
+
+/** Cancel any pending spawnMonster timer (call before stopping the game). */
+function cancelSpawnTimer() {
+    if (gameState.spawnTimerId !== null) {
+        clearTimeout(gameState.spawnTimerId);
+        gameState.spawnTimerId = null;
+    }
 }
 
 function checkStageComplete() {
     const config = STAGE_CONFIGS[gameState.currentStage];
     if (gameState.stageScore >= config.targetScore) {
         gameState.isPlaying = false;
+        cancelSpawnTimer();
         gameState.totalScore += gameState.stageScore;
 
         if (gameState.currentStage >= STAGE_CONFIGS.length - 1) {
@@ -1419,6 +1641,7 @@ function showGameComplete() {
 
 function endGame() {
     gameState.isPlaying = false;
+    cancelSpawnTimer();
     hideGripHintBar();
     hideCameraBadge();
     hideInstructionBar();
@@ -1975,35 +2198,40 @@ function initStage(stageIndex) {
 
 async function startGame() {
     gameState.totalScore = 0;
-    initStage(0);
+    // Hide all game screens; initStage is deferred to the overview "Begin" click
     startScreen.classList.add("hidden");
     stageCompleteScreen.classList.add("hidden");
     gameCompleteScreen.classList.add("hidden");
     gameOverScreen.classList.add("hidden");
 
-    showStoryCard(0, () => {
-        gameState.isPlaying = true;
-        startAmbience();
-        showCameraBadge();
-        showInstructionBar();
-        showGripHintBar();
-        spawnMonster();
-        gameLoop();
+    showStageOverview(0, () => {
+        // initStage(0) already called inside showStageOverview before this cb fires
+        showStoryCard(gameState.currentStage, () => {
+            gameState.isPlaying = true;
+            startAmbience();
+            showCameraBadge();
+            showInstructionBar();
+            showGripHintBar();
+            spawnMonster();
+            gameLoop();
+        });
     });
 }
 
 function nextStage() {
-    const nextIndex = gameState.currentStage + 1;
-    initStage(nextIndex);
+    const completedCount = gameState.currentStage + 1;
     stageCompleteScreen.classList.add("hidden");
 
-    showStoryCard(nextIndex, () => {
-        gameState.isPlaying = true;
-        showCameraBadge();
-        showInstructionBar();
-        showGripHintBar();
-        spawnMonster();
-        gameLoop();
+    showStageOverview(completedCount, () => {
+        // initStage(completedCount) already called inside showStageOverview
+        showStoryCard(gameState.currentStage, () => {
+            gameState.isPlaying = true;
+            showCameraBadge();
+            showInstructionBar();
+            showGripHintBar();
+            spawnMonster();
+            gameLoop();
+        });
     });
 }
 
@@ -2027,9 +2255,27 @@ function buildWeaponPicker() {
         btn.setAttribute("role", "option");
         btn.setAttribute("aria-selected", i === gameState.selectedWeaponIndex ? "true" : "false");
         btn.dataset.index = String(i);
-        btn.innerHTML = w.noWeapon
-            ? `<span class="weapon-none-placeholder" aria-hidden="true">—</span><span>${w.label}</span>`
-            : `<img src="${w.path}" alt="" /><span>${w.label}</span>`;
+        // Colour accent applied via CSS custom property
+        if (w.color) btn.style.setProperty("--wc-accent", w.color);
+        const imgHTML = w.noWeapon
+            ? `<div class="wc-img-wrap wc-img-hands" aria-hidden="true">
+                   <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" class="wc-hands-svg">
+                       <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="2.5" stroke-dasharray="6 4" opacity="0.4"/>
+                       <path d="M22 38 C22 26 26 22 32 20 C38 22 42 26 42 38" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                       <ellipse cx="32" cy="41" rx="10" ry="7" stroke="currentColor" stroke-width="2.5"/>
+                   </svg>
+               </div>`
+            : `<div class="wc-img-wrap" aria-hidden="true">
+                   <img src="${w.path}" alt="" class="wc-img" />
+               </div>`;
+        btn.innerHTML = `
+            ${imgHTML}
+            <div class="wc-body">
+                <span class="wc-maori">${w.maoiLabel || ""}</span>
+                <span class="wc-name">${w.label}</span>
+                <span class="wc-desc">${w.desc || ""}</span>
+            </div>
+            <span class="wc-check" aria-hidden="true">✓</span>`;
         btn.addEventListener("click", () => {
             gameState.selectedWeaponIndex = i;
             grid.querySelectorAll(".weapon-card").forEach((b, j) => {

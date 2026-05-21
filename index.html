@@ -90,18 +90,96 @@
             </div>
         </div>
 
+        <!-- Stage journey overview (shown before first stage and between stages) -->
+        <div id="stage-overview-screen" class="hidden">
+            <div class="ov-inner">
+                <div class="ov-header">
+                    <div class="ov-header-left">
+                        <p class="ov-label">TE ARA · THE JOURNEY</p>
+                        <h2 class="ov-title">Four stages, one <em class="ov-em">haerenga</em></h2>
+                    </div>
+                    <div class="ov-header-right">
+                        <div class="ov-prog-bar" role="progressbar"
+                             aria-valuemin="0" aria-valuemax="4" aria-label="Stages completed">
+                            <div id="ov-prog-fill" class="ov-prog-fill"></div>
+                        </div>
+                        <p id="ov-prog-text" class="ov-prog-text">0 OF 4 COMPLETE</p>
+                    </div>
+                </div>
+                <p id="ov-story" class="ov-story" aria-live="polite"></p>
+                <div id="ov-cards" class="ov-cards" role="list"></div>
+            </div>
+        </div>
+
         <!-- Game screens -->
         <div id="start-screen">
-            <div class="start-card">
-                <h1>Māori Sea Hunt</h1>
-                <p class="start-tagline">Swing your arms · defeat sea creatures · protect your people</p>
-                <div id="weapon-picker" class="weapon-picker">
-                    <p class="weapon-picker-title">Choose your weapon</p>
-                    <div id="weapon-grid" class="weapon-grid" role="listbox" aria-label="Weapon selection"></div>
+            <!-- Animated ocean background layers -->
+            <div class="ss-bg" aria-hidden="true">
+                <div class="ss-wave ss-wave-1"></div>
+                <div class="ss-wave ss-wave-2"></div>
+                <div class="ss-wave ss-wave-3"></div>
+            </div>
+
+            <div class="ss-scroll">
+                <!-- Hero -->
+                <header class="ss-hero">
+                    <p class="ss-kia-ora">Kia ora — Welcome</p>
+                    <h1 class="ss-title">Māori Sea Hunt</h1>
+                    <p class="ss-maori-sub">Te Kimi Moana</p>
+                    <div class="ss-divider">
+                        <span></span><span class="ss-div-icon">🌊</span><span></span>
+                    </div>
+                    <p class="ss-tagline">Swing your arms · defeat sea creatures · protect your people</p>
+                </header>
+
+                <!-- Feature pills -->
+                <div class="ss-features" aria-label="Game features">
+                    <span class="ss-pill">📷 Motion Controlled</span>
+                    <span class="ss-pill">🌊 4-Stage Journey</span>
+                    <span class="ss-pill">💪 Arm Exercise</span>
+                    <span class="ss-pill">🏺 Cultural Story</span>
                 </div>
-                <button type="button" id="start-btn" disabled>Begin</button>
-                <p id="camera-status" class="hint" role="status">Checking camera…</p>
-                <p class="safety-tip">🛡️ Stand or sit safely with space to swing your arms gently</p>
+
+                <!-- Weapon picker -->
+                <section class="ss-section" aria-labelledby="weapon-section-label">
+                    <p class="ss-section-label" id="weapon-section-label">
+                        <span class="ss-section-maori">Tīpuna Rākau</span>
+                        Choose Your Weapon
+                    </p>
+                    <div id="weapon-grid" class="weapon-grid" role="listbox" aria-label="Weapon selection"></div>
+                </section>
+
+                <!-- How to play -->
+                <section class="ss-section ss-howto" aria-labelledby="howto-label">
+                    <p class="ss-section-label" id="howto-label">
+                        <span class="ss-section-maori">Ngā Tohutohu</span>
+                        How to Play
+                    </p>
+                    <div class="ss-steps">
+                        <div class="ss-step">
+                            <span class="ss-step-num">1</span>
+                            <span class="ss-step-text">Stand or sit with room to move your arms safely</span>
+                        </div>
+                        <div class="ss-step">
+                            <span class="ss-step-num">2</span>
+                            <span class="ss-step-text">Allow camera access when your browser prompts you</span>
+                        </div>
+                        <div class="ss-step">
+                            <span class="ss-step-num">3</span>
+                            <span class="ss-step-text">Swing your arm to slash through approaching sea creatures!</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CTA -->
+                <div class="ss-cta">
+                    <button type="button" id="start-btn" disabled>
+                        <span class="ss-btn-maori">Tīmata</span>
+                        Begin Journey
+                    </button>
+                    <p id="camera-status" class="ss-camera-status" role="status">Checking camera…</p>
+                    <p class="ss-safety">🛡️ Stand or sit safely with space to swing your arms gently</p>
+                </div>
             </div>
         </div>
         <div id="stage-complete-screen" class="hidden">
