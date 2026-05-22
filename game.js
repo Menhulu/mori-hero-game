@@ -40,35 +40,36 @@ const STAGE_CONFIGS = [
         pointsPerKill: 15
     },
     {
-        // Stage 3 — Challenging: moderate pace, needs focus
+        // Stage 3 — Moderate challenge: gentle step up from Stage 2
+        // Lower vy + gravity keeps arcs slow; slightly shorter intervals add pressure
         id: 3,
         name: "Deep current",
         targetScore: 460,
         lives: 6,
         background: "img/background03.png",
         monsters: {
-            size: { min: 85, max: 135 },
-            speed: { vyMin: 14, vyMax: 18, vxMax: 5.0 },
-            gravity: 0.20,
-            spawnInterval: { min: 2200, max: 3000 },
-            spawnCount: { min: 3, max: 5 },
+            size: { min: 88, max: 138 },
+            speed: { vyMin: 12, vyMax: 15, vxMax: 4.0 },   // same vy range as Stage 2; only vx nudged up
+            gravity: 0.15,                                   // barely more than Stage 2 (0.14) → arcs still hang ~3 s
+            spawnInterval: { min: 2600, max: 3600 },         // only slightly tighter than Stage 2 (3000–4000)
+            spawnCount: { min: 3, max: 4 },                  // capped at 4 per wave (was 5)
             levelUpBonus: 0.45
         },
         pointsPerKill: 20
     },
     {
-        // Stage 4 — Fierce: faster but still beatable by older players
+        // Stage 4 — Challenging: what Stage 3 used to feel like, now the true peak
         id: 4,
         name: "Final abyss",
         targetScore: 640,
         lives: 5,
         background: "img/background03.png",
         monsters: {
-            size: { min: 78, max: 122 },
-            speed: { vyMin: 17, vyMax: 22, vxMax: 7.0 },
-            gravity: 0.28,
-            spawnInterval: { min: 1700, max: 2400 },
-            spawnCount: { min: 4, max: 6 },
+            size: { min: 80, max: 125 },
+            speed: { vyMin: 14, vyMax: 18, vxMax: 5.5 },   // old Stage-3 speed — tough but fair
+            gravity: 0.20,                                   // old Stage-3 gravity
+            spawnInterval: { min: 2000, max: 2800 },         // faster cadence is the main pressure
+            spawnCount: { min: 3, max: 5 },
             levelUpBonus: 0.65
         },
         pointsPerKill: 28
@@ -400,6 +401,82 @@ function playGameOverSound() {
         playTone(freq, "triangle", 0.38, 0.22, ctx.currentTime + i * 0.18);
     });
 }
+
+// ── Per-species kill sounds ───────────────────────────────────────────────────
+function playSpeciesKillSound(species) {
+    const ctx = audioCtx();
+    const now = ctx.currentTime;
+    if (species === SPECIES.CRAB) {
+        // Rapid shell-clicks: 3 short noise bursts
+        for (let i = 0; i < 3; i++) {
+            const t = now + i * 0.045;
+            const len = Math.ceil(ctx.sampleRate * 0.022);
+            const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+            const d   = buf.getChannelData(0);
+            for (let j = 0; j < len; j++) d[j] = (Math.random() * 2 - 1) * (1 - j / len);
+            const src = ctx.createBufferSource(); src.buffer = buf;
+            const hpf = ctx.createBiquadFilter(); hpf.type = "highpass"; hpf.frequency.value = 3200;
+            const g   = ctx.createGain();
+            src.connect(hpf); hpf.connect(g); g.connect(ctx.destination);
+            g.gain.setValueAtTime(0.22, t);
+            src.start(t); src.stop(t + 0.025);
+        }
+    } else if (species === SPECIES.BLOWFISH) {
+        // Cartoon pop: sharp descending pitch
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.connect(g); g.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(900, now);
+        osc.frequency.exponentialRampToValueAtTime(75, now + 0.14);
+        g.gain.setValueAtTime(0.38, now);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+        osc.start(now); osc.stop(now + 0.17);
+    } else if (species === SPECIES.OCTOPUS || species === SPECIES.ELECTRIC) {
+        // Wet splat: low-pass filtered noise thud
+        const len = Math.ceil(ctx.sampleRate * 0.16);
+        const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+        const d   = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.1);
+        const src = ctx.createBufferSource(); src.buffer = buf;
+        const lpf = ctx.createBiquadFilter(); lpf.type = "lowpass"; lpf.frequency.value = 380;
+        const g   = ctx.createGain();
+        src.connect(lpf); lpf.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.45, now);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+        src.start(now); src.stop(now + 0.18);
+    }
+    // Other species: default hit sound already plays, no extra needed
+}
+
+function playPowerUpCollectSound(type) {
+    const ctx = audioCtx();
+    const now = ctx.currentTime;
+    if (type === "heart") {
+        [523, 659, 784].forEach((f, i) => playTone(f, "sine", 0.18, 0.22, now + i * 0.07));
+    } else {
+        [784, 988, 1175].forEach((f, i) => playTone(f, "triangle", 0.14, 0.28, now + i * 0.05));
+    }
+}
+
+function playChainLightningSound() {
+    const ctx = audioCtx();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(2200, now);
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.12);
+    g.gain.setValueAtTime(0.18, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+    osc.start(now); osc.stop(now + 0.15);
+}
+
+function playWaveClearSound() {
+    const ctx = audioCtx();
+    const now = ctx.currentTime;
+    [523, 659, 784, 1047, 1319].forEach((f, i) =>
+        playTone(f, "sine", 0.28, 0.3, now + i * 0.09));
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 let gameState = {
@@ -416,6 +493,8 @@ let gameState = {
     nearHitBursts: [],
     floatTexts: [],
     swingSparkles: [],
+    powerUps: [],           // ⭐ dropped heart / star collectibles
+    lightningArcs: [],      // ⚡ chain-lightning visual arcs
     leftWristHistory: [],
     rightWristHistory: [],
     leftWristSmooth: { x: null, y: null },
@@ -423,8 +502,14 @@ let gameState = {
     selectedWeaponIndex: 0,
     weaponPoseSmooth: { left: null, right: null },
     weaponHitFlash: 0,
+    screenShake: 0,         // pixels of camera shake; decays each frame
     gripHintTimer: null,
-    spawnTimerId: null   // tracks pending spawnMonster setTimeout so it can be cancelled
+    spawnTimerId: null,
+    // wave-clear tracking
+    waveId: 0,
+    waveKillCount: 0,
+    waveMissCount: 0,
+    waveTotal: 0,
 };
 
 const canvas = document.getElementById("game-canvas");
@@ -441,6 +526,10 @@ const rimCtx = rimCanvas.getContext("2d");
 // so that fingers and arm edges become fully opaque instead of semi-transparent
 const maskExpandCanvas = document.createElement("canvas");
 const maskExpandCtx = maskExpandCanvas.getContext("2d", { willReadFrequently: true });
+// Threshold canvas: receives maskExpandCanvas after high-contrast filter
+// to snap semi-transparent halo pixels to fully opaque/transparent
+const threshCanvas = document.createElement("canvas");
+const threshCtx = threshCanvas.getContext("2d");
 const bgImage = new Image();
 const startScreen = document.getElementById("start-screen");
 const stageCompleteScreen = document.getElementById("stage-complete-screen");
@@ -544,20 +633,21 @@ function initCameraCheck() {
     setCameraCheckStatus("loading");
     startCameraPreview();
 
-    // Failsafe: enable Continue after 8 s regardless of detection quality
+    // Failsafe: after 20 s without detection, show a manual override note
+    // but do NOT silently enable the button — user must consciously click "proceed anyway"
     _cameraCheckReadyTimer = setTimeout(() => {
         _cameraCheckReadyTimer = null;
-        if (ccContinueBtn && ccContinueBtn.disabled) {
-            ccContinueBtn.disabled = false;
-            if (!_cameraCheckBodyFound) {
-                // Don't override "found" status
-                if (ccFeedback) {
-                    ccFeedback.textContent =
-                        "Camera is active — raise your arms and press the button to start";
-                }
+        if (!_cameraCheckBodyFound) {
+            if (ccFeedback) {
+                ccFeedback.textContent =
+                    "Having trouble detecting your arms? That's okay — press the button to continue anyway.";
+            }
+            if (ccContinueBtn) {
+                ccContinueBtn.disabled = false;
+                ccContinueBtn.style.opacity = "0.75";
             }
         }
-    }, 8000);
+    }, 20000);
 
     if (ccContinueBtn) {
         ccContinueBtn.addEventListener("click", hideCameraCheckScreen, { once: true });
@@ -644,12 +734,20 @@ function drawVirtualBackground(results) {
 
     bgCtx.clearRect(0, 0, w, h);
     if (bgImage.complete && bgImage.naturalWidth) {
+        // Option C: blur + desaturate the background image before compositing.
+        // blur(4px) kills fine detail so the scene reads as atmosphere, not texture.
+        // saturate(0.45) drains colour from the background so sea monsters stay
+        // the most vivid elements on screen — instant visual hierarchy.
+        bgCtx.save();
+        bgCtx.filter = "blur(4px) saturate(0.45)";
         drawImageCover(bgCtx, bgImage, w, h);
+        bgCtx.filter = "none";
+        bgCtx.restore();
     } else {
         bgCtx.fillStyle = "#023047";
         bgCtx.fillRect(0, 0, w, h);
     }
-    // Darken background slightly so person and monsters stand out
+    // Dark overlay: 0.28 — light touch, scenery stays vivid, monsters still pop
     bgCtx.fillStyle = "rgba(0, 10, 24, 0.28)";
     bgCtx.fillRect(0, 0, w, h);
 
@@ -705,24 +803,100 @@ function drawVirtualBackground(results) {
     maskExpandCtx.filter = "none";
     maskExpandCtx.globalCompositeOperation = "source-over";
 
-    // ── Hand landmark fill: paint opaque circles at wrist+finger tips ─
-    // MediaPipe Pose has near-zero confidence at finger extremities.
-    // We compensate by stamping a filled radial gradient at every visible
-    // hand/wrist landmark so those pixels become fully opaque in the mask.
-    // Landmark indices: 15=L wrist,16=R wrist,17=L pinky,18=R pinky,
-    //                   19=L index,20=R index,21=L thumb,22=R thumb
+    // ── Hand fill: fan-of-strokes + polygon + gradient circles ──────────
+    // MediaPipe Pose only provides wrist (15/16) + 4 fingertips (17-22).
+    // Middle & ring fingers have NO landmarks, so a simple polygon leaves
+    // visible gaps between fingers.
+    //
+    // Three-layer approach:
+    //   1. FAT STROKES  — thick blurred lines from wrist to each fingertip
+    //                     (+ interpolated middle/ring positions).
+    //                     Each stroke ≈ 2× finger-width, so adjacent strokes
+    //                     overlap and seal the inter-finger gaps.
+    //   2. PALM POLYGON — blurred convex hull of all landmarks to solidify the
+    //                     base of the hand.
+    //   3. GRADIENT DOTS — soft radial circles at every landmark for edge feather.
+    //
+    // Landmark indices: 15=L wrist, 16=R wrist
+    //                   17=L pinky tip, 18=R pinky tip
+    //                   19=L index tip, 20=R index tip
+    //                   21=L thumb tip, 22=R thumb tip
     if (results.poseLandmarks) {
+        const L = results.poseLandmarks;
+
+        const handDefs = [
+            { wrist: 15, thumb: 21, index: 19, pinky: 17 },  // left
+            { wrist: 16, thumb: 22, index: 20, pinky: 18 },  // right
+        ];
+
+        for (const hd of handDefs) {
+            const wPt = L[hd.wrist];
+            if (!wPt || wPt.visibility < 0.20) continue;
+
+            const wx = wPt.x * vw;
+            const wy = wPt.y * vh;
+
+            // Collect visible fingertip positions
+            const tips = [hd.thumb, hd.index, hd.pinky]
+                .map(i => L[i])
+                .filter(pt => pt && pt.visibility > 0.18)
+                .map(pt => [pt.x * vw, pt.y * vh]);
+
+            if (tips.length < 2) continue;
+
+            // Estimate missing middle & ring finger tips by interpolating
+            // between index and pinky (spread evenly at 1/3 and 2/3)
+            const idxPt  = tips.find((_, i) => [hd.index].includes([hd.thumb, hd.index, hd.pinky][i]));
+            const idxTip = tips[1] ?? tips[0]; // index (middle of array)
+            const pinkyTip = tips[tips.length - 1];
+            const midTip  = [(idxTip[0] * 2 + pinkyTip[0]) / 3,
+                              (idxTip[1] * 2 + pinkyTip[1]) / 3];   // middle finger estimate
+            const ringTip = [(idxTip[0] + pinkyTip[0] * 2) / 3,
+                              (idxTip[1] + pinkyTip[1] * 2) / 3];   // ring finger estimate
+            const allTips = [...tips, midTip, ringTip];
+
+            // ── Layer 1: Fat strokes from wrist to every fingertip ────
+            const strokeW = vw * 0.085; // ≈ 1.3× finger width — enough to fill gaps without giant halo
+            maskExpandCtx.save();
+            maskExpandCtx.filter    = "blur(8px)";
+            maskExpandCtx.strokeStyle = "rgba(255,255,255,1)";
+            maskExpandCtx.lineWidth = strokeW;
+            maskExpandCtx.lineCap   = "round";
+            maskExpandCtx.lineJoin  = "round";
+            for (const [tx, ty] of allTips) {
+                maskExpandCtx.beginPath();
+                maskExpandCtx.moveTo(wx, wy);
+                maskExpandCtx.lineTo(tx, ty);
+                maskExpandCtx.stroke();
+            }
+            maskExpandCtx.restore();
+
+            // ── Layer 2: Palm polygon (convex hull of wrist + all tips) ─
+            const polyPts = [[wx, wy], ...allTips];
+            maskExpandCtx.save();
+            maskExpandCtx.filter    = "blur(10px)";
+            maskExpandCtx.fillStyle = "rgba(255,255,255,1)";
+            maskExpandCtx.beginPath();
+            maskExpandCtx.moveTo(polyPts[0][0], polyPts[0][1]);
+            for (let i = 1; i < polyPts.length; i++) {
+                maskExpandCtx.lineTo(polyPts[i][0], polyPts[i][1]);
+            }
+            maskExpandCtx.closePath();
+            maskExpandCtx.fill();
+            maskExpandCtx.restore();
+        }
+
+        // ── Layer 3: Soft gradient dot at each landmark ───────────────
         const handIdx = [15, 16, 17, 18, 19, 20, 21, 22];
-        const handR = vw * 0.09; // circle radius ≈ 9% of video width (roughly a palm)
+        const handR   = vw * 0.07;   // tighter radius — the threshold pass compensates
         for (const idx of handIdx) {
-            const pt = results.poseLandmarks[idx];
-            if (!pt || pt.visibility < 0.25) continue;
+            const pt = L[idx];
+            if (!pt || pt.visibility < 0.22) continue;
             const px = pt.x * vw;
             const py = pt.y * vh;
-            // Radial gradient: fully opaque core, fades at edge for natural blend
-            const grad = maskExpandCtx.createRadialGradient(px, py, handR * 0.25, px, py, handR);
+            const grad = maskExpandCtx.createRadialGradient(px, py, handR * 0.2, px, py, handR);
             grad.addColorStop(0,   "rgba(255,255,255,1.0)");
-            grad.addColorStop(0.6, "rgba(255,255,255,0.95)");
+            grad.addColorStop(0.55,"rgba(255,255,255,0.95)");
             grad.addColorStop(1,   "rgba(255,255,255,0)");
             maskExpandCtx.fillStyle = grad;
             maskExpandCtx.beginPath();
@@ -731,14 +905,34 @@ function drawVirtualBackground(results) {
         }
     }
 
-    // ── Person cutout: use expanded mask as alpha source ──────────────
+    // ── Threshold pass: snap soft mask edges to binary ────────────────
+    // The blurred mask has large semi-transparent zones (~0.2–0.6 alpha)
+    // at hand/finger/arm edges. These let the bright room background bleed
+    // through as a white glow. A high-contrast filter snaps them to 0 or 1
+    // so the cutout has clean hard edges with no halo.
+    //
+    // contrast(7) + brightness(1.2): alpha values that were < ~0.45 → 0 (gone),
+    // values > ~0.55 → 1 (fully opaque). Small soft feather still remains
+    // at the very outer edge due to the blur, but the large translucent zone is eliminated.
+    if (threshCanvas.width !== vw || threshCanvas.height !== vh) {
+        threshCanvas.width = vw;
+        threshCanvas.height = vh;
+    }
+    threshCtx.clearRect(0, 0, vw, vh);
+    threshCtx.filter = "contrast(7) brightness(1.18)";
+    threshCtx.drawImage(maskExpandCanvas, 0, 0, vw, vh);
+    threshCtx.filter = "none";
+
+    // ── Person cutout: use THRESHOLDED mask (hard edges, no halo) ─────
     scratchCtx.clearRect(0, 0, vw, vh);
-    scratchCtx.drawImage(maskExpandCanvas, 0, 0, vw, vh);
+    scratchCtx.drawImage(threshCanvas, 0, 0, vw, vh);
     scratchCtx.globalCompositeOperation = "source-in";
     scratchCtx.drawImage(video, 0, 0, vw, vh);
     scratchCtx.globalCompositeOperation = "source-over";
 
-    // ── Warm amber rim-glow silhouette (uses same expanded mask) ─────
+    // ── Warm amber rim-glow uses soft (un-thresholded) mask ──────────
+    // The rim glow LOOKS GOOD with soft edges (they fade into the ocean),
+    // so keep maskExpandCanvas here — only the person cutout needs hard edges.
     rimCtx.clearRect(0, 0, vw, vh);
     rimCtx.drawImage(maskExpandCanvas, 0, 0, vw, vh);
     rimCtx.globalCompositeOperation = "source-in";
@@ -848,6 +1042,11 @@ class Monster {
 
         this.image = loadedMonsterImages[this.monsterTypeIndex] || null;
         this.alive = true;
+        this.dying = false;
+        this.deathAge = 0;
+        this.deathScaleMult = 1;
+        this.deathSpinV = 0;
+        this.waveId = gameState.waveId;   // track which wave this monster belongs to
         this.points = config.pointsPerKill;
 
         // Te Wheke (octopus) = Boss — slightly smaller than normal (flicker makes up for it), triple points
@@ -979,7 +1178,7 @@ class Monster {
     }
 
     getDrawScale() {
-        return this.size * this.getSpawnScale() * this.getSpeciesScale();
+        return this.size * this.getSpawnScale() * this.getSpeciesScale() * this.deathScaleMult;
     }
 
     update() {
@@ -1056,6 +1255,7 @@ class Monster {
         if (fellThrough || lostOffside) {
             if (fellThrough) {
                 gameState.lives--;
+                gameState.waveMissCount++;
                 showComboBreak(gameState.combo);
                 gameState.combo = 0;
                 playLifeLostSound();
@@ -1067,8 +1267,20 @@ class Monster {
         return true;
     }
 
+    // Death animation: spin + shrink over ~18 frames; returns true while still animating
+    updateDeath() {
+        this.deathAge++;
+        this.deathSpinV += 0.04;
+        this.rotation += this.deathSpinV;
+        this.deathScaleMult = Math.max(0, 1 - this.deathAge / 16);
+        this.opacity = Math.max(0, 1 - this.deathAge / 13);
+        this.x += this.vx * 0.25;
+        this.y += this.vy * 0.12;
+        return this.deathAge < 18;
+    }
+
     draw(ctx2) {
-        if (!this.alive) return;
+        if (!this.alive && !this.dying) return;
         const s = this.getDrawScale();
         const half = s / 2;
         const sp = this.monsterTypeIndex;
@@ -1456,6 +1668,150 @@ class FloatScore {
         ctx2.fillText(this.text, this.x, this.y);
         ctx2.restore();
     }
+}
+
+// ─── #36 Power-up collectible (heart / star) ─────────────────────────────────
+class PowerUp {
+    constructor(x, y, type) {
+        this.x    = x;
+        this.y    = y;
+        this.type = type;   // "heart" | "star"
+        this.vy   = -3.5 + Math.random() * -2;  // pop upward first
+        this.vx   = (Math.random() - 0.5) * 2.5;
+        this.gravity = 0.22;
+        this.size = 36;
+        this.life = 1;          // fades out naturally after ~4 s
+        this.age  = 0;
+        this.collected = false;
+    }
+
+    update() {
+        this.age++;
+        this.vy += this.gravity;
+        this.x  += this.vx;
+        this.y  += this.vy;
+        // Fade after 90 frames (~1.5 s remain)
+        if (this.age > 120) this.life -= 0.018;
+        // Check collection by either hand palm
+        if (!this.collected) {
+            for (const hand of ["left", "right"]) {
+                const hs = gameState[hand + "WristSmooth"];
+                if (hs.x == null) continue;
+                const dx = this.x - hs.x;
+                const dy = this.y - hs.y;
+                if (dx * dx + dy * dy < (80) ** 2) {
+                    this.collected = true;
+                    this.life = 0;
+                    if (this.type === "heart") {
+                        const maxLives = STAGE_CONFIGS[gameState.currentStage].lives;
+                        gameState.lives = Math.min(gameState.lives + 1, maxLives);
+                        updateUI();
+                    } else {
+                        // star: +50 bonus score
+                        const bonus = 50;
+                        gameState.stageScore += bonus;
+                        gameState.floatTexts.push(new FloatScore(this.x, this.y - 30, `+${bonus}★`));
+                        updateUI();
+                    }
+                    playPowerUpCollectSound(this.type);
+                    break;
+                }
+            }
+        }
+        return this.life > 0 && this.y < gameH + 60;
+    }
+
+    draw(ctx2) {
+        ctx2.save();
+        ctx2.globalAlpha = Math.min(1, this.life * 1.4);
+        // Pulse scale
+        const pulse = 1 + 0.12 * Math.sin(this.age * 0.25);
+        ctx2.translate(this.x, this.y);
+        ctx2.scale(pulse, pulse);
+        const emoji = this.type === "heart" ? "❤️" : "⭐";
+        ctx2.font = `${this.size}px serif`;
+        ctx2.textAlign = "center";
+        ctx2.textBaseline = "middle";
+        // Glow behind emoji
+        ctx2.shadowColor = this.type === "heart" ? "rgba(255,80,80,0.9)" : "rgba(255,220,0,0.9)";
+        ctx2.shadowBlur  = 18;
+        ctx2.fillText(emoji, 0, 0);
+        ctx2.restore();
+    }
+}
+
+// ─── #37 Chain-lightning arc ──────────────────────────────────────────────────
+class LightningArc {
+    constructor(x0, y0, x1, y1) {
+        this.x0 = x0; this.y0 = y0;
+        this.x1 = x1; this.y1 = y1;
+        this.life = 1;
+        this.age  = 0;
+        // Generate jagged mid-points for the bolt
+        this._buildSegments();
+    }
+
+    _buildSegments() {
+        const segs = 8;
+        const pts  = [{ x: this.x0, y: this.y0 }];
+        for (let i = 1; i < segs; i++) {
+            const t  = i / segs;
+            const bx = this.x0 + (this.x1 - this.x0) * t;
+            const by = this.y0 + (this.y1 - this.y0) * t;
+            const perp = Math.hypot(this.x1 - this.x0, this.y1 - this.y0) * 0.18;
+            pts.push({ x: bx + (Math.random() - 0.5) * perp,
+                       y: by + (Math.random() - 0.5) * perp });
+        }
+        pts.push({ x: this.x1, y: this.y1 });
+        this._pts = pts;
+    }
+
+    update() {
+        this.age++;
+        // Rebuild jagged path every 3 frames to flicker like real lightning
+        if (this.age % 3 === 0) this._buildSegments();
+        this.life -= 0.10;
+        return this.life > 0;
+    }
+
+    draw(ctx2) {
+        ctx2.save();
+        ctx2.globalAlpha = Math.min(1, this.life * 1.5);
+        ctx2.strokeStyle = `rgba(180, 230, 255, ${this.life})`;
+        ctx2.lineWidth = 2 + 3 * this.life;
+        ctx2.shadowColor = "rgba(100, 200, 255, 0.9)";
+        ctx2.shadowBlur  = 18;
+        ctx2.beginPath();
+        ctx2.moveTo(this._pts[0].x, this._pts[0].y);
+        for (const p of this._pts.slice(1)) ctx2.lineTo(p.x, p.y);
+        ctx2.stroke();
+        // Inner bright core
+        ctx2.strokeStyle = "rgba(255,255,255,0.95)";
+        ctx2.lineWidth = 1;
+        ctx2.shadowBlur = 6;
+        ctx2.stroke();
+        ctx2.restore();
+    }
+}
+
+// ─── #41 Wave-clear bonus ─────────────────────────────────────────────────────
+function checkWaveClear() {
+    // Only trigger when the wave was all-or-nothing (at least 2 monsters) and 0 missed
+    if (gameState.waveTotal < 2) return;
+    if (gameState.waveKillCount < gameState.waveTotal) return;
+    if (gameState.waveMissCount > 0) return;
+    // All killed with none missed → grant bonus
+    const clearBonus = Math.round(gameState.waveTotal * 15);
+    gameState.stageScore += clearBonus;
+    gameState.floatTexts.push(
+        new FloatScore(gameW / 2, gameH * 0.22, `WAVE CLEAR +${clearBonus}`)
+    );
+    playWaveClearSound();
+    updateUI();
+    // Reset so next wave starts fresh
+    gameState.waveKillCount = 0;
+    gameState.waveMissCount = 0;
+    gameState.waveTotal     = 0;
 }
 
 // ─── Error card ───────────────────────────────────────────────────────────────
@@ -1876,14 +2232,19 @@ function updateUI() {
 
 function showComboText(x, y, text) {
     const el = document.createElement("div");
-    el.className = "combo-text";
+    // #38 Combo视觉升级: parse combo number for tier colour
+    const comboNum = parseInt(text, 10) || 0;
+    let tier = "combo-text";
+    if (comboNum >= 8)      tier = "combo-text combo-text--rainbow";
+    else if (comboNum >= 5) tier = "combo-text combo-text--gold";
+    else if (comboNum >= 3) tier = "combo-text combo-text--cyan";
+    el.className = tier;
     el.textContent = text;
-    // Show just below the affirmation so they stack cleanly at top
     el.style.left      = "50%";
     el.style.transform = "translateX(-50%)";
     el.style.top       = `${Math.round(gameH * 0.14)}px`;
     document.getElementById("game-container").appendChild(el);
-    setTimeout(() => el.remove(), 1400);
+    setTimeout(() => el.remove(), 1600);
 }
 
 function setBackground(imagePath) {
@@ -1923,6 +2284,12 @@ function spawnMonster() {
             const j = Math.floor(Math.random() * (i + 1));
             [baseZones[i], baseZones[j]] = [baseZones[j], baseZones[i]];
         }
+
+        // #41 波次清空奖励: assign a new waveId for this batch
+        gameState.waveId++;
+        gameState.waveKillCount = 0;
+        gameState.waveMissCount = 0;
+        gameState.waveTotal     = count;
 
         for (let i = 0; i < count; i++) {
             const targetXFraction = Math.max(0.18, Math.min(0.82,
@@ -2133,6 +2500,8 @@ function endGame() {
     hideEmptyState();
     stopAmbience();
     playGameOverSound();
+    // Remember which stage the player failed on so retryCurrentStage can resume there
+    gameState.failedStageIndex = gameState.currentStage;
     reachedStageEl.textContent = gameState.currentStage + 1;
     finalScoreEl.textContent = gameState.totalScore + gameState.stageScore;
     gameOverScreen.classList.remove("hidden");
@@ -2190,19 +2559,70 @@ function tryHitMonsterAt(px, py, hitIds) {
 
         if (dist2 < rHit * rHit) {
             hitIds.add(monster);
+
+            // ── Transition to death animation ────────────────────────────────
             monster.alive = false;
+            monster.dying = true;
+            monster.deathAge = 0;
+            monster.deathSpinV = (Math.random() > 0.5 ? 1 : -1) * (0.06 + Math.random() * 0.08);
             monster.hitVibe = 1;
             monster.nearHitCooldownFrames = 0;
+
             gameState.combo++;
             const comboTier = Math.floor(gameState.combo / 5);
             const config = STAGE_CONFIGS[gameState.currentStage];
+
+            // ── #40 速击奖励: monster still rising (vy < 0) → 2× points ─────
+            const earlyStrike = monster.vy < 0;
+            const earlyMult   = earlyStrike ? 2 : 1;
             const bonus = 1 + comboTier * (0.12 + config.monsters.levelUpBonus * 0.08);
-            const points = Math.round(monster.points * bonus);
+            const points = Math.round(monster.points * bonus * earlyMult);
             gameState.stageScore += points;
+
             gameState.killBursts.push(new KillBurst(monster.x, monster.y));
-            gameState.floatTexts.push(new FloatScore(monster.x, monster.y - 42, `+${points}`));
+            const scoreLabel = earlyStrike ? `+${points} ⚡` : `+${points}`;
+            gameState.floatTexts.push(new FloatScore(monster.x, monster.y - 42, scoreLabel));
+
+            // ── #35 屏幕震动: stronger at higher combos ──────────────────────
+            const shakeStrength = Math.min(18, 5 + gameState.combo * 1.5);
+            gameState.screenShake = Math.max(gameState.screenShake, shakeStrength);
+
+            // ── #39 物种专属音效 ────────────────────────────────────────────
+            playSpeciesKillSound(monster.monsterTypeIndex);
             playHitSound(comboTier);
             gameState.weaponHitFlash = 9;
+
+            // ── #36 道具掉落: rare drop (20 % chance — boss always drops star) ──
+            const dropRoll = Math.random();
+            if (monster.isBoss || dropRoll < 0.10) {
+                gameState.powerUps.push(new PowerUp(monster.x, monster.y, "star"));
+            } else if (dropRoll < 0.20) {
+                gameState.powerUps.push(new PowerUp(monster.x, monster.y, "heart"));
+            }
+
+            // ── #37 连锁闪电: combo≥5 → zap nearest alive monster ───────────
+            if (gameState.combo >= 5) {
+                let nearest = null;
+                let bestD2  = Infinity;
+                for (const m2 of gameState.monsters) {
+                    if (!m2.alive || m2 === monster) continue;
+                    const d2 = (m2.x - monster.x) ** 2 + (m2.y - monster.y) ** 2;
+                    if (d2 < bestD2) { bestD2 = d2; nearest = m2; }
+                }
+                if (nearest && bestD2 < (gameW * 0.65) ** 2) {
+                    gameState.lightningArcs.push(
+                        new LightningArc(monster.x, monster.y, nearest.x, nearest.y)
+                    );
+                    // Chain kill: same dying treatment, no extra combo/score
+                    nearest.alive = false;
+                    nearest.dying = true;
+                    nearest.deathAge = 0;
+                    nearest.deathSpinV = (Math.random() > 0.5 ? 1 : -1) * 0.1;
+                    gameState.killBursts.push(new KillBurst(nearest.x, nearest.y));
+                    playChainLightningSound();
+                }
+            }
+
             if (monster.isBoss) {
                 showKupeVictory(monster.x, monster.y);
             } else {
@@ -2210,10 +2630,15 @@ function tryHitMonsterAt(px, py, hitIds) {
             }
             updateUI();
             checkStageComplete();
+
             if (gameState.combo >= 3) {
                 showComboText(monster.x, monster.y, `${gameState.combo} combo`);
                 playComboSound(gameState.combo);
             }
+
+            // ── #41 波次清空奖励: track per-wave kills ───────────────────────
+            gameState.waveKillCount++;
+            checkWaveClear();
         } else if (dist2 < rNear * rNear) {
             // Near miss feedback: visual only (does not affect score/lives)
             if (monster.nearHitCooldownFrames <= 0) {
@@ -2424,7 +2849,7 @@ function updateWeaponHandPose(landmarks) {
         const armLen = Math.hypot(dx, dy) || 1;
         const ux = dx / armLen;
         const uy = dy / armLen;
-        const along = armLen * 0.168;
+        const along = armLen * 0.38;   // wrist → palm centre (~38% of forearm)
         const thumb = armLen * 0.045;
         const perpX = -uy;
         const perpY = ux;
@@ -2576,11 +3001,17 @@ function onResults(results) {
         const lw = lm[15]; // left wrist
         const rw = lm[16]; // right wrist
         const bothShoulders = ls && rs && ls.visibility > 0.5 && rs.visibility > 0.5;
-        const oneWrist      = (lw && lw.visibility > 0.4) || (rw && rw.visibility > 0.4);
-        if (bothShoulders && oneWrist) {
+        // Require BOTH wrists to be visible AND raised above the shoulder line
+        // (In MediaPipe normalised coords, y decreases upward — wrist.y < shoulder.y means arm is raised)
+        const lRaised = lw && ls && lw.visibility > 0.4 && lw.y < ls.y - 0.02;
+        const rRaised = rw && rs && rw.visibility > 0.4 && rw.y < rs.y - 0.02;
+        if (bothShoulders && lRaised && rRaised) {
             _cameraCheckBodyFound = true;
             setCameraCheckStatus("found");
-            if (ccContinueBtn) ccContinueBtn.disabled = false;
+            if (ccContinueBtn) {
+                ccContinueBtn.disabled  = false;
+                ccContinueBtn.style.opacity = "";
+            }
         }
     }
     // ─────────────────────────────────────────────────────────────────
@@ -2599,15 +3030,30 @@ function onResults(results) {
     if (!gameState.isPlaying || !results.poseLandmarks) return;
 
     const landmarks = results.poseLandmarks;
-    const leftWrist = landmarks[15];
+    const leftElbow  = landmarks[13];
+    const leftWrist  = landmarks[15];
+    const rightElbow = landmarks[14];
     const rightWrist = landmarks[16];
 
-    const lx = (1 - leftWrist.x) * gameW;
-    const ly = leftWrist.y * gameH;
-    const rx = (1 - rightWrist.x) * gameW;
-    const ry = rightWrist.y * gameH;
+    /**
+     * Compute palm centre: offset from wrist toward fingertips
+     * by ~38% of the forearm length (elbow→wrist), matching
+     * the weapon display anchor in updateWeaponHandPose.
+     */
+    const PALM_OFFSET = 0.38;
+    const palmCenter = (elbow, wrist) => {
+        const ex = (1 - elbow.x) * gameW,  ey = elbow.y * gameH;
+        const wx = (1 - wrist.x) * gameW,  wy = wrist.y * gameH;
+        const dx = wx - ex, dy = wy - ey;
+        const len = Math.hypot(dx, dy) || 1;
+        return {
+            x: wx + (dx / len) * len * PALM_OFFSET,
+            y: wy + (dy / len) * len * PALM_OFFSET
+        };
+    };
 
-    if (landmarkVisible(leftWrist)) {
+    if (landmarkVisible(leftWrist) && landmarkVisible(leftElbow)) {
+        const { x: lx, y: ly } = palmCenter(leftElbow, leftWrist);
         processWristSlash(gameState.leftWristHistory, lx, ly, 195, gameState.leftWristSmooth, gameState.leftTrail);
     } else {
         gameState.leftWristHistory = [];
@@ -2615,7 +3061,8 @@ function onResults(results) {
         // trail fades naturally via tick()
     }
 
-    if (landmarkVisible(rightWrist)) {
+    if (landmarkVisible(rightWrist) && landmarkVisible(rightElbow)) {
+        const { x: rx, y: ry } = palmCenter(rightElbow, rightWrist);
         processWristSlash(gameState.rightWristHistory, rx, ry, 28, gameState.rightWristSmooth, gameState.rightTrail);
     } else {
         gameState.rightWristHistory = [];
@@ -2628,7 +3075,26 @@ function gameLoop() {
 
     ctx.clearRect(0, 0, gameW, gameH);
 
+    // ── Screen shake ──────────────────────────────────────────────────────────
+    let shakeApplied = false;
+    if (gameState.screenShake > 0.5) {
+        const sx = (Math.random() - 0.5) * gameState.screenShake * 2;
+        const sy = (Math.random() - 0.5) * gameState.screenShake * 2;
+        ctx.save();
+        ctx.translate(sx, sy);
+        shakeApplied = true;
+        gameState.screenShake = Math.max(0, gameState.screenShake - 1.8);
+    } else {
+        gameState.screenShake = 0;
+    }
+
+    // ── Monsters (alive + dying) ───────────────────────────────────────────
     gameState.monsters = gameState.monsters.filter((monster) => {
+        if (monster.dying) {
+            const still = monster.updateDeath();
+            monster.draw(ctx);
+            return still;
+        }
         if (!monster.alive) return false;
         const onScreen = monster.update();
         if (onScreen) monster.draw(ctx);
@@ -2637,7 +3103,7 @@ function gameLoop() {
 
     // Show empty-state hint between waves when no monsters are visible
     if (emptyStateEl) {
-        const hasVisible = gameState.monsters.some(m => m.alive);
+        const hasVisible = gameState.monsters.some(m => m.alive || m.dying);
         emptyStateEl.classList.toggle("hidden", hasVisible);
     }
 
@@ -2645,6 +3111,20 @@ function gameLoop() {
     gameState.rightTrail.tick();
     gameState.leftTrail.draw(ctx);
     gameState.rightTrail.draw(ctx);
+
+    // ── Power-up collectibles ──────────────────────────────────────────────
+    gameState.powerUps = gameState.powerUps.filter((pu) => {
+        const alive = pu.update();
+        if (alive) pu.draw(ctx);
+        return alive;
+    });
+
+    // ── Chain-lightning arcs ───────────────────────────────────────────────
+    gameState.lightningArcs = gameState.lightningArcs.filter((arc) => {
+        const alive = arc.update();
+        if (alive) arc.draw(ctx);
+        return alive;
+    });
 
     gameState.killBursts = gameState.killBursts.filter((b) => {
         const alive = b.update();
@@ -2670,6 +3150,8 @@ function gameLoop() {
         return alive;
     });
 
+    if (shakeApplied) ctx.restore();
+
     if (_swingSoundCooldown > 0) _swingSoundCooldown--;
     if (gameState.weaponHitFlash > 0) gameState.weaponHitFlash--;
 
@@ -2691,6 +3173,13 @@ function initStage(stageIndex) {
     gameState.nearHitBursts = [];
     gameState.floatTexts = [];
     gameState.swingSparkles = [];
+    gameState.powerUps = [];
+    gameState.lightningArcs = [];
+    gameState.screenShake = 0;
+    gameState.waveId = 0;
+    gameState.waveKillCount = 0;
+    gameState.waveMissCount = 0;
+    gameState.waveTotal = 0;
     gameState.leftWristHistory = [];
     gameState.rightWristHistory = [];
     gameState.leftWristSmooth = { x: null, y: null };
@@ -2728,6 +3217,28 @@ async function startGame() {
     } else {
         launchStageOverview();
     }
+}
+
+/**
+ * Retry from the stage the player just failed on.
+ * Scores reset to 0; previously-completed stages show as "done" in the overview.
+ */
+function retryCurrentStage() {
+    const stageToRetry = gameState.failedStageIndex ?? 0;
+    gameState.totalScore = 0;
+    gameOverScreen.classList.add("hidden");
+
+    showStageOverview(stageToRetry, () => {
+        showStoryCard(gameState.currentStage, () => {
+            gameState.isPlaying = true;
+            startAmbience();
+            showCameraBadge();
+            showInstructionBar();
+            showGripHintBar();
+            spawnMonster();
+            gameLoop();
+        });
+    });
 }
 
 function nextStage() {
@@ -2858,7 +3369,7 @@ async function init() {
     startBtn.addEventListener("click", startGame);
     nextStageBtn.addEventListener("click", nextStage);
     playAgainBtn.addEventListener("click", startGame);
-    restartBtn.addEventListener("click", startGame);
+    restartBtn.addEventListener("click", retryCurrentStage);
 }
 
 init().catch((err) => {

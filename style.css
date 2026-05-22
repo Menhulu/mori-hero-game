@@ -168,10 +168,10 @@ body {
     overflow-y: auto;
     background:
         radial-gradient(ellipse 110% 55% at 50% 0%,
-            rgba(2, 80, 120, 0.6) 0%, transparent 65%),
+            rgba(2, 80, 120, 0.55) 0%, transparent 65%),
         linear-gradient(180deg,
             #020c1b 0%,
-            rgba(2, 48, 71, 0.55) 40%,
+            #02304a 40%,
             #011a2e 70%,
             #020c1b 100%);
     padding: clamp(16px, 3vh, 36px) clamp(16px, 4vw, 60px);
@@ -1057,6 +1057,42 @@ body {
         opacity: 0;
         transform: translate(-50%, -65%) scale(1.55);
     }
+}
+
+/* #38 Combo colour tiers */
+.combo-text--cyan {
+    color: #90e0ef;
+    text-shadow:
+        0 0 22px rgba(144, 224, 239, 0.95),
+        0 3px 14px rgba(0, 0, 0, 0.55);
+}
+.combo-text--gold {
+    color: #ffd166;
+    font-size: clamp(44px, 10vw, 66px);
+    text-shadow:
+        0 0 28px rgba(255, 209, 102, 0.98),
+        0 0 8px rgba(255, 180, 0, 0.8),
+        0 3px 14px rgba(0, 0, 0, 0.55);
+    animation: comboFadeGold 1.6s ease-out forwards;
+}
+@keyframes comboFadeGold {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.75); }
+    15%  { transform: translate(-50%, -50%) scale(1.15); }
+    100% { opacity: 0; transform: translate(-50%, -70%) scale(1.7); }
+}
+.combo-text--rainbow {
+    font-size: clamp(50px, 12vw, 78px);
+    background: linear-gradient(90deg, #ff6b6b, #ffd166, #06d6a0, #90e0ef, #c77dff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 16px rgba(255,255,255,0.8));
+    animation: comboFadeRainbow 1.8s ease-out forwards;
+}
+@keyframes comboFadeRainbow {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.7); filter: drop-shadow(0 0 24px white); }
+    12%  { transform: translate(-50%, -50%) scale(1.22); }
+    100% { opacity: 0; transform: translate(-50%, -75%) scale(1.9); }
 }
 
 /* ── Stage progress bar ─────────────────────────────────────── */
