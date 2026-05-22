@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Māori Sea Hunt — Arm Exercise Game</title>
+    <title>Toa Moana — Sea Warrior</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -111,6 +111,81 @@
             </div>
         </div>
 
+        <!-- Camera check screen (shown after model loads, before start) -->
+        <div id="camera-check-screen">
+            <div class="cc-inner">
+                <!-- Header -->
+                <div class="cc-header">
+                    <p class="cc-label">Tūāhu Kamera · Camera Setup</p>
+                    <h2 class="cc-title">Let's check your camera</h2>
+                    <p class="cc-sub">Follow the 3 steps on the right, then click the button</p>
+                </div>
+
+                <!-- Preview + steps row -->
+                <div class="cc-body">
+                    <!-- Live preview -->
+                    <div class="cc-preview-wrap">
+                        <canvas id="camera-preview-canvas" class="cc-preview"></canvas>
+                        <!-- Silhouette guide overlay — arms raised to show target pose -->
+                        <div class="cc-guide" aria-hidden="true">
+                            <svg viewBox="0 0 180 280" class="cc-silhouette" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <!-- head -->
+                                <circle cx="90" cy="36" r="26" stroke="currentColor" stroke-width="2.5" stroke-dasharray="6 4"/>
+                                <!-- torso -->
+                                <line x1="90" y1="62"  x2="90"  y2="158" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                                <!-- arms raised up and out (Y-pose) -->
+                                <line x1="90" y1="88"  x2="18"  y2="38"  stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+                                <line x1="90" y1="88"  x2="162" y2="38"  stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+                                <!-- legs -->
+                                <line x1="90" y1="158" x2="60"  y2="252" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="90" y1="158" x2="120" y2="252" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                            </svg>
+                            <p class="cc-guide-label">Raise your arms like this</p>
+                        </div>
+                        <!-- Status badge -->
+                        <div id="cc-status-badge" class="cc-status-badge cc-status--loading">
+                            <span class="cc-status-dot"></span>
+                            <span id="cc-status-text">Starting camera…</span>
+                        </div>
+                    </div>
+
+                    <!-- 3 large step cards (elderly-friendly) -->
+                    <div class="cc-steps">
+                        <div class="cc-step">
+                            <div class="cc-step-emoji">📏</div>
+                            <div class="cc-step-body">
+                                <p class="cc-step-title">Step back 1–2 metres</p>
+                                <p class="cc-step-sub">Your whole upper body should be visible</p>
+                            </div>
+                        </div>
+                        <div class="cc-step">
+                            <div class="cc-step-emoji">☀️</div>
+                            <div class="cc-step-body">
+                                <p class="cc-step-title">Face the light</p>
+                                <p class="cc-step-sub">Stand near a window or lamp</p>
+                            </div>
+                        </div>
+                        <div class="cc-step cc-step--raise" id="cc-raise-step">
+                            <div class="cc-step-emoji" id="cc-raise-emoji">🙌</div>
+                            <div class="cc-step-body">
+                                <p class="cc-step-title">Raise both arms up</p>
+                                <p class="cc-step-sub">Lift them so the camera can see your hands</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CTA -->
+                <div class="cc-cta">
+                    <p id="cc-feedback" class="cc-feedback" aria-live="polite">Waiting for camera…</p>
+                    <button id="cc-continue-btn" type="button" disabled>
+                        <span class="cc-btn-maori">Haere tonu</span>
+                        I'm Ready — Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Game screens -->
         <div id="start-screen">
             <!-- Animated ocean background layers -->
@@ -124,61 +199,24 @@
                 <!-- Hero -->
                 <header class="ss-hero">
                     <p class="ss-kia-ora">Kia ora — Welcome</p>
-                    <h1 class="ss-title">Māori Sea Hunt</h1>
-                    <p class="ss-maori-sub">Te Kimi Moana</p>
-                    <div class="ss-divider">
-                        <span></span><span class="ss-div-icon">🌊</span><span></span>
-                    </div>
-                    <p class="ss-tagline">Swing your arms · defeat sea creatures · protect your people</p>
+                    <h1 class="ss-title">Toa Moana</h1>
+                    <p class="ss-title-en">Sea Warrior</p>
+                    <p class="ss-tagline">Swing your arms · protect your people</p>
                 </header>
-
-                <!-- Feature pills -->
-                <div class="ss-features" aria-label="Game features">
-                    <span class="ss-pill">📷 Motion Controlled</span>
-                    <span class="ss-pill">🌊 4-Stage Journey</span>
-                    <span class="ss-pill">💪 Arm Exercise</span>
-                    <span class="ss-pill">🏺 Cultural Story</span>
-                </div>
 
                 <!-- Weapon picker -->
                 <section class="ss-section" aria-labelledby="weapon-section-label">
-                    <p class="ss-section-label" id="weapon-section-label">
-                        <span class="ss-section-maori">Tīpuna Rākau</span>
-                        Choose Your Weapon
-                    </p>
+                    <p class="ss-section-label" id="weapon-section-label">Choose Your Weapon</p>
                     <div id="weapon-grid" class="weapon-grid" role="listbox" aria-label="Weapon selection"></div>
-                </section>
-
-                <!-- How to play -->
-                <section class="ss-section ss-howto" aria-labelledby="howto-label">
-                    <p class="ss-section-label" id="howto-label">
-                        <span class="ss-section-maori">Ngā Tohutohu</span>
-                        How to Play
-                    </p>
-                    <div class="ss-steps">
-                        <div class="ss-step">
-                            <span class="ss-step-num">1</span>
-                            <span class="ss-step-text">Stand or sit with room to move your arms safely</span>
-                        </div>
-                        <div class="ss-step">
-                            <span class="ss-step-num">2</span>
-                            <span class="ss-step-text">Allow camera access when your browser prompts you</span>
-                        </div>
-                        <div class="ss-step">
-                            <span class="ss-step-num">3</span>
-                            <span class="ss-step-text">Swing your arm to slash through approaching sea creatures!</span>
-                        </div>
-                    </div>
                 </section>
 
                 <!-- CTA -->
                 <div class="ss-cta">
                     <button type="button" id="start-btn" disabled>
-                        <span class="ss-btn-maori">Tīmata</span>
-                        Begin Journey
+                        <span class="ss-btn-maori">Tīmata — Begin</span>
+                        Start Playing
                     </button>
                     <p id="camera-status" class="ss-camera-status" role="status">Checking camera…</p>
-                    <p class="ss-safety">🛡️ Stand or sit safely with space to swing your arms gently</p>
                 </div>
             </div>
         </div>
@@ -189,11 +227,48 @@
             <button type="button" id="next-stage-btn">Next stage</button>
         </div>
         <div id="game-complete-screen" class="hidden">
-            <h1>Ka rawe! — Magnificent!</h1>
-            <p class="end-sub">You defeated all sea creatures and protected your people.</p>
-            <p>Total score: <span id="total-score">0</span></p>
-            <p class="end-whanau">Share this moment with your whānau 🌊</p>
-            <button type="button" id="play-again-btn">Play again</button>
+            <div class="gc-content">
+                <div class="gc-warrior-badge">
+                    <span class="gc-warrior-icon">🏆</span>
+                    <div class="gc-warrior-info">
+                        <div class="gc-warrior-name" id="gc-warrior-name">Toa</div>
+                        <div class="gc-warrior-title" id="gc-warrior-title">Warrior</div>
+                    </div>
+                </div>
+                <h1>Ka rawe! — Magnificent!</h1>
+                <p class="end-sub">You defeated all sea creatures and protected your people.</p>
+                <div class="gc-score-row">
+                    <div class="gc-score-box">
+                        <div class="gc-score-label">This game</div>
+                        <div class="gc-score-val" id="total-score">0</div>
+                    </div>
+                    <div class="gc-score-box gc-score-box--best">
+                        <div class="gc-score-label">Personal best</div>
+                        <div class="gc-score-val" id="gc-personal-best">0</div>
+                        <div class="gc-new-best hidden" id="gc-new-best">✨ New best!</div>
+                    </div>
+                </div>
+                <div class="gc-leaderboard">
+                    <div class="gc-lb-title">🏅 Your journey so far</div>
+                    <ol class="gc-lb-list" id="gc-lb-list"></ol>
+                </div>
+                <button type="button" id="play-again-btn">Play again</button>
+            </div>
+        </div>
+
+        <!-- Name setup overlay — shown on first visit only -->
+        <div id="name-setup-overlay" class="hidden">
+            <div class="name-setup-inner">
+                <div class="name-setup-ocean">🌊</div>
+                <p class="name-setup-greeting">Nau mai, haere mai!</p>
+                <h2 class="name-setup-title">Ko wai tō ingoa?</h2>
+                <p class="name-setup-sub">What is your name, warrior?</p>
+                <input id="player-name-input" type="text" class="name-setup-input"
+                    placeholder="Your name" maxlength="24" autocomplete="off" spellcheck="false">
+                <button id="name-setup-confirm" type="button" class="name-setup-btn">
+                    Tūtū ana — Let's go! →
+                </button>
+            </div>
         </div>
         <div id="game-over-screen" class="hidden">
             <h1>Kia kaha! — Stay strong!</h1>

@@ -1,70 +1,75 @@
 /**
- * Māori Sea Hunt — upper-body movement game
+ * Toa Moana — Sea Warrior (upper-body movement game)
  * MediaPipe Pose: segmentation + wrist trails; ocean as virtual background (video-call style)
  */
 
 const STAGE_CONFIGS = [
     {
+        // Stage 1 — Calm: slow high arcs, large targets, forgiving
+        // Monsters hang in the air ~3+ s — plenty of time to swing
         id: 1,
         name: "Shallow warm-up",
-        targetScore: 120,
+        targetScore: 160,
         lives: 7,
         background: "img/background01.png",
         monsters: {
-            size: { min: 100, max: 160 },
-            speed: { vx: 0.28, vyMin: 2.0, vyMax: 3.2 },
-            gravity: 0.022,
-            spawnInterval: { min: 1900, max: 2800 },
-            spawnCount: { min: 1, max: 2 },
-            levelUpBonus: 0.20
+            size: { min: 120, max: 185 },
+            speed: { vyMin: 11, vyMax: 14, vxMax: 1.8 },   // higher launch → taller arcs
+            gravity: 0.07,                                   // very low gravity → huge, lazy arc (hang ~4 s)
+            spawnInterval: { min: 3800, max: 5000 },         // longer gaps — very relaxed pace
+            spawnCount: { min: 3, max: 4 },
+            levelUpBonus: 0.15
         },
         pointsPerKill: 10
     },
     {
+        // Stage 2 — Moderate: slightly faster arcs, still comfortable
         id: 2,
         name: "Surf zone",
-        targetScore: 220,
+        targetScore: 280,
         lives: 7,
         background: "img/background02.png",
         monsters: {
-            size: { min: 92, max: 150 },
-            speed: { vx: 0.42, vyMin: 3.0, vyMax: 4.8 },
-            gravity: 0.032,
-            spawnInterval: { min: 1600, max: 2400 },
-            spawnCount: { min: 1, max: 3 },
-            levelUpBonus: 0.35
+            size: { min: 95, max: 152 },
+            speed: { vyMin: 12, vyMax: 15, vxMax: 3.5 },
+            gravity: 0.14,
+            spawnInterval: { min: 3000, max: 4000 },
+            spawnCount: { min: 3, max: 5 },
+            levelUpBonus: 0.30
         },
         pointsPerKill: 15
     },
     {
+        // Stage 3 — Challenging: moderate pace, needs focus
         id: 3,
         name: "Deep current",
-        targetScore: 380,
+        targetScore: 460,
         lives: 6,
         background: "img/background03.png",
         monsters: {
-            size: { min: 84, max: 140 },
-            speed: { vx: 0.55, vyMin: 4.0, vyMax: 6.5 },
-            gravity: 0.044,
-            spawnInterval: { min: 1350, max: 2100 },
-            spawnCount: { min: 2, max: 4 },
-            levelUpBonus: 0.50
+            size: { min: 85, max: 135 },
+            speed: { vyMin: 14, vyMax: 18, vxMax: 5.0 },
+            gravity: 0.20,
+            spawnInterval: { min: 2200, max: 3000 },
+            spawnCount: { min: 3, max: 5 },
+            levelUpBonus: 0.45
         },
         pointsPerKill: 20
     },
     {
+        // Stage 4 — Fierce: faster but still beatable by older players
         id: 4,
         name: "Final abyss",
-        targetScore: 520,
+        targetScore: 640,
         lives: 5,
         background: "img/background03.png",
         monsters: {
-            size: { min: 78, max: 130 },
-            speed: { vx: 0.70, vyMin: 5.0, vyMax: 8.2 },
-            gravity: 0.055,
-            spawnInterval: { min: 1150, max: 1900 },
-            spawnCount: { min: 2, max: 5 },
-            levelUpBonus: 0.68
+            size: { min: 78, max: 122 },
+            speed: { vyMin: 17, vyMax: 22, vxMax: 7.0 },
+            gravity: 0.28,
+            spawnInterval: { min: 1700, max: 2400 },
+            spawnCount: { min: 4, max: 6 },
+            levelUpBonus: 0.65
         },
         pointsPerKill: 28
     }
@@ -115,7 +120,7 @@ const STAGE_OVERVIEW = [
         motto: "Kia tūpato — Stay Alert",
         cardImg: "img/story-card/1-Relaxed Exploration.png",
         details: [
-            { label: "Creatures per wave",  value: "1 – 2",        icon: "wave" },
+            { label: "Creatures per wave",  value: "3 – 4",        icon: "wave" },
             { label: "Speed",               value: "Calm",          icon: "feather" },
             { label: "Creature size",       value: "Large",         icon: "resize" },
             { label: "Points per creature", value: "10 pts",        icon: "star" },
@@ -130,7 +135,7 @@ const STAGE_OVERVIEW = [
         motto: "Kia kaha — Stay Strong",
         cardImg: "img/story-card/2-Steady Growth.png",
         details: [
-            { label: "Creatures per wave",  value: "1 – 3",        icon: "wave" },
+            { label: "Creatures per wave",  value: "3 – 5",        icon: "wave" },
             { label: "Speed",               value: "Moderate",      icon: "run" },
             { label: "Creature size",       value: "Medium",        icon: "resize" },
             { label: "Points per creature", value: "15 pts",        icon: "star" },
@@ -145,7 +150,7 @@ const STAGE_OVERVIEW = [
         motto: "Wero Tino — Focused Challenge",
         cardImg: "img/story-card/3-Focused Challenge.png",
         details: [
-            { label: "Creatures per wave",  value: "2 – 4",        icon: "wave" },
+            { label: "Creatures per wave",  value: "4 – 6",        icon: "wave" },
             { label: "Speed",               value: "Fast",          icon: "bolt" },
             { label: "Creature size",       value: "Smaller",       icon: "resize" },
             { label: "Points per creature", value: "20 pts",        icon: "star" },
@@ -160,7 +165,7 @@ const STAGE_OVERVIEW = [
         motto: "Ngāwhatu Kai-ponu — Final Strike",
         cardImg: "img/story-card/4-Final Strike.png",
         details: [
-            { label: "Creatures per wave",  value: "2 – 5",        icon: "wave" },
+            { label: "Creatures per wave",  value: "6 – 7",        icon: "wave" },
             { label: "Speed",               value: "Fierce",        icon: "flame" },
             { label: "Creature size",       value: "Smallest",      icon: "resize" },
             { label: "Points per creature", value: "28 pts",        icon: "star" },
@@ -201,14 +206,14 @@ const MIN_SLASH_LEN = 20;
 const WRIST_HISTORY_MAX = 18;
 /** Exponential smoothing: higher = snappier, lower = smoother */
 const WRIST_SMOOTH_ALPHA = 0.32;
-const HIT_RADIUS_EXTRA = 88;
+const HIT_RADIUS_EXTRA = 115;
 // User request: make monsters 1.3x larger
 const MONSTER_SIZE_MULT = 1.3;
 // Near miss feedback (visual only, does not count as a kill)
 const NEAR_HIT_RADIUS_EXTRA = 125;
 const NEAR_HIT_COOLDOWN_FRAMES = 14;
 const LANDMARK_MIN_VIS = 0.35;
-const MAX_MONSTERS = 4;
+const MAX_MONSTERS = 7;
 
 const monsterImages = [
     "img/sea-monster/blowfish.png",
@@ -432,6 +437,10 @@ const scratchCtx = scratchCanvas.getContext("2d");
 // Persistent rim-glow canvas: warm amber silhouette drawn blurred under person
 const rimCanvas = document.createElement("canvas");
 const rimCtx = rimCanvas.getContext("2d");
+// Mask expansion canvas: used to threshold + expand the segmentation mask
+// so that fingers and arm edges become fully opaque instead of semi-transparent
+const maskExpandCanvas = document.createElement("canvas");
+const maskExpandCtx = maskExpandCanvas.getContext("2d", { willReadFrequently: true });
 const bgImage = new Image();
 const startScreen = document.getElementById("start-screen");
 const stageCompleteScreen = document.getElementById("stage-complete-screen");
@@ -455,6 +464,107 @@ const reachedStageEl = document.getElementById("reached-stage");
 const finalScoreEl = document.getElementById("final-score");
 
 const loadingOverlay   = document.getElementById("loading-overlay");
+
+// ── Camera check screen ───────────────────────────────────────────
+const cameraCheckScreen = document.getElementById("camera-check-screen");
+const ccContinueBtn     = document.getElementById("cc-continue-btn");
+const ccStatusBadge     = document.getElementById("cc-status-badge");
+const ccStatusText      = document.getElementById("cc-status-text");
+const ccFeedback        = document.getElementById("cc-feedback");
+
+let _cameraCheckPreviewRaf  = null; // RAF id for the preview draw loop
+let _cameraCheckBodyFound   = false; // true once pose + arms detected
+let _cameraCheckReadyTimer  = null; // failsafe timer
+
+const CC_STATUS_MSGS = {
+    loading:   { badge: "Starting up…",              feedback: "Setting up the camera — just a moment…" },
+    searching: { badge: "Looking for you…",           feedback: "👆 Please raise both arms so the camera can see them!" },
+    found:     { badge: "✓  Got you!",                feedback: "✓  Perfect — tap the button below to start playing" },
+    error:     { badge: "⚠  Camera unavailable",     feedback: "Please allow camera access in your browser settings, then refresh the page" },
+};
+
+function setCameraCheckStatus(state) {
+    const msg = CC_STATUS_MSGS[state];
+    if (!msg) return;
+    if (ccStatusBadge) {
+        ccStatusBadge.className = `cc-status-badge cc-status--${state}`;
+    }
+    if (ccStatusText) ccStatusText.textContent = msg.badge;
+    if (ccFeedback)   ccFeedback.textContent   = msg.feedback;
+
+    // Animate the "raise arms" step card based on detection state
+    const raiseStep = document.getElementById("cc-raise-step");
+    if (raiseStep) {
+        raiseStep.classList.toggle("cc-step--active", state === "searching");
+        raiseStep.classList.toggle("cc-step--found",  state === "found");
+    }
+}
+
+function startCameraPreview() {
+    const canvas = document.getElementById("camera-preview-canvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    function drawFrame() {
+        _cameraCheckPreviewRaf = requestAnimationFrame(drawFrame);
+        if (!video || video.readyState < 2) return;
+        // Sync canvas pixels to display size
+        const w = canvas.offsetWidth;
+        const h = canvas.offsetHeight;
+        if (canvas.width !== w || canvas.height !== h) {
+            canvas.width  = w;
+            canvas.height = h;
+        }
+        // Draw video mirrored (like a mirror — more intuitive for positioning)
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, -w, 0, w, h);
+        ctx.restore();
+    }
+    drawFrame();
+}
+
+function stopCameraPreview() {
+    if (_cameraCheckPreviewRaf !== null) {
+        cancelAnimationFrame(_cameraCheckPreviewRaf);
+        _cameraCheckPreviewRaf = null;
+    }
+}
+
+function hideCameraCheckScreen() {
+    if (cameraCheckScreen) cameraCheckScreen.classList.add("hidden");
+    stopCameraPreview();
+    if (_cameraCheckReadyTimer !== null) {
+        clearTimeout(_cameraCheckReadyTimer);
+        _cameraCheckReadyTimer = null;
+    }
+}
+
+function initCameraCheck() {
+    setCameraCheckStatus("loading");
+    startCameraPreview();
+
+    // Failsafe: enable Continue after 8 s regardless of detection quality
+    _cameraCheckReadyTimer = setTimeout(() => {
+        _cameraCheckReadyTimer = null;
+        if (ccContinueBtn && ccContinueBtn.disabled) {
+            ccContinueBtn.disabled = false;
+            if (!_cameraCheckBodyFound) {
+                // Don't override "found" status
+                if (ccFeedback) {
+                    ccFeedback.textContent =
+                        "Camera is active — raise your arms and press the button to start";
+                }
+            }
+        }
+    }, 8000);
+
+    if (ccContinueBtn) {
+        ccContinueBtn.addEventListener("click", hideCameraCheckScreen, { once: true });
+    }
+}
+// ─────────────────────────────────────────────────────────────────
+
 const storyCardOverlay = document.getElementById("story-card-overlay");
 const storyCardStageEl = document.getElementById("story-card-stage");
 const storyCardImgEl   = document.getElementById("story-card-img");
@@ -543,6 +653,15 @@ function drawVirtualBackground(results) {
     bgCtx.fillStyle = "rgba(0, 10, 24, 0.28)";
     bgCtx.fillRect(0, 0, w, h);
 
+    // Top vignette: deep-blue gradient hides any room-background bleed-through
+    // that appears above the player's head when segmentation is imperfect
+    const topVig = bgCtx.createLinearGradient(0, 0, 0, h * 0.25);
+    topVig.addColorStop(0,   "rgba(0, 8, 28, 0.88)");
+    topVig.addColorStop(0.6, "rgba(0, 8, 28, 0.35)");
+    topVig.addColorStop(1,   "rgba(0, 8, 28, 0)");
+    bgCtx.fillStyle = topVig;
+    bgCtx.fillRect(0, 0, w, h * 0.25);
+
     const vw = video.videoWidth || 640;
     const vh = video.videoHeight || 360;
     if (!vw || !vh) return;
@@ -563,27 +682,74 @@ function drawVirtualBackground(results) {
         scratchCanvas.height = vh;
         rimCanvas.width = vw;
         rimCanvas.height = vh;
+        maskExpandCanvas.width = vw;
+        maskExpandCanvas.height = vh;
     }
 
-    // ── Person cutout (mask → video pixels) ──────────────────────────
+    // ── Build an expanded, thresholded mask to fix semi-transparent fingers ──
+    // MediaPipe Pose gives fingers/extremities low confidence (alpha ≈ 0.1–0.3).
+    // Fix: draw mask with large blur (expands detected regions outward, filling
+    // gaps at fingers), then draw again at full opacity with source-atop to boost
+    // low-alpha pixels. The net effect fills in fingers and softens outer edges.
+    maskExpandCtx.clearRect(0, 0, vw, vh);
+    // Pass 1 — expand: large blur pushes the person region outward ~12px,
+    // filling finger gaps and arm-edge gaps caused by low model confidence
+    maskExpandCtx.filter = "blur(12px)";
+    maskExpandCtx.drawImage(mask, 0, 0, vw, vh);
+    maskExpandCtx.filter = "none";
+    // Pass 2 — reinforce the high-confidence core at full opacity so the
+    // body centre stays solid; source-atop keeps this within the expanded halo
+    maskExpandCtx.globalCompositeOperation = "source-atop";
+    maskExpandCtx.filter = "blur(3px)";
+    maskExpandCtx.drawImage(mask, 0, 0, vw, vh);
+    maskExpandCtx.filter = "none";
+    maskExpandCtx.globalCompositeOperation = "source-over";
+
+    // ── Hand landmark fill: paint opaque circles at wrist+finger tips ─
+    // MediaPipe Pose has near-zero confidence at finger extremities.
+    // We compensate by stamping a filled radial gradient at every visible
+    // hand/wrist landmark so those pixels become fully opaque in the mask.
+    // Landmark indices: 15=L wrist,16=R wrist,17=L pinky,18=R pinky,
+    //                   19=L index,20=R index,21=L thumb,22=R thumb
+    if (results.poseLandmarks) {
+        const handIdx = [15, 16, 17, 18, 19, 20, 21, 22];
+        const handR = vw * 0.09; // circle radius ≈ 9% of video width (roughly a palm)
+        for (const idx of handIdx) {
+            const pt = results.poseLandmarks[idx];
+            if (!pt || pt.visibility < 0.25) continue;
+            const px = pt.x * vw;
+            const py = pt.y * vh;
+            // Radial gradient: fully opaque core, fades at edge for natural blend
+            const grad = maskExpandCtx.createRadialGradient(px, py, handR * 0.25, px, py, handR);
+            grad.addColorStop(0,   "rgba(255,255,255,1.0)");
+            grad.addColorStop(0.6, "rgba(255,255,255,0.95)");
+            grad.addColorStop(1,   "rgba(255,255,255,0)");
+            maskExpandCtx.fillStyle = grad;
+            maskExpandCtx.beginPath();
+            maskExpandCtx.arc(px, py, handR, 0, Math.PI * 2);
+            maskExpandCtx.fill();
+        }
+    }
+
+    // ── Person cutout: use expanded mask as alpha source ──────────────
     scratchCtx.clearRect(0, 0, vw, vh);
-    scratchCtx.drawImage(mask, 0, 0, vw, vh);
+    scratchCtx.drawImage(maskExpandCanvas, 0, 0, vw, vh);
     scratchCtx.globalCompositeOperation = "source-in";
     scratchCtx.drawImage(video, 0, 0, vw, vh);
     scratchCtx.globalCompositeOperation = "source-over";
 
-    // ── Warm amber rim-glow silhouette ────────────────────────────────
+    // ── Warm amber rim-glow silhouette (uses same expanded mask) ─────
     rimCtx.clearRect(0, 0, vw, vh);
-    rimCtx.drawImage(mask, 0, 0, vw, vh);
+    rimCtx.drawImage(maskExpandCanvas, 0, 0, vw, vh);
     rimCtx.globalCompositeOperation = "source-in";
-    rimCtx.fillStyle = "rgba(255, 155, 50, 0.92)";
+    rimCtx.fillStyle = "rgba(255, 155, 50, 0.85)";
     rimCtx.fillRect(0, 0, vw, vh);
     rimCtx.globalCompositeOperation = "source-over";
 
-    // Draw blurred warm silhouette first (rim glow behind person)
+    // Draw subtle warm silhouette first (rim glow behind person)
     bgCtx.save();
-    bgCtx.filter = "blur(22px)";
-    bgCtx.globalAlpha = 0.72;
+    bgCtx.filter = "blur(12px)";              // reduced from 22px → less blurry halo
+    bgCtx.globalAlpha = 0.55;                 // reduced from 0.72 → subtler glow
     bgCtx.translate(w, 0);
     bgCtx.scale(-1, 1);
     drawImageCover(bgCtx, rimCanvas, w, h);
@@ -645,7 +811,7 @@ function landmarkVisible(lm) {
 }
 
 class Monster {
-    constructor(config) {
+    constructor(config, spawnHints = {}) {
         this.size =
             config.monsters.size.min +
             Math.random() * (config.monsters.size.max - config.monsters.size.min);
@@ -660,6 +826,10 @@ class Monster {
         this.hitVibe = 0;
         this.nearHitCooldownFrames = 0;
 
+        // Batch hints: side and screen-zone are pre-assigned to prevent clustering
+        this._fromLeft = spawnHints.fromLeft;            // undefined = random
+        this._targetXFraction = spawnHints.targetXFraction; // undefined = random
+
         this.puffPhase = Math.random() * Math.PI * 2;
         this.puffSpeed = 0.09 + Math.random() * 0.05;
         this.eelPhase = Math.random() * Math.PI * 2;
@@ -668,132 +838,121 @@ class Monster {
         this.bobPhase = Math.random() * Math.PI * 2;
         this.electricShock = 0;
         this.flipX = 1;
+        this.crabWalkPhase = Math.random() * Math.PI * 2;
 
         const sp = this.monsterTypeIndex;
 
-        if (sp === SPECIES.CRAB) {
-            this.spawnCrabHorizontal(config);
-        } else if (sp === SPECIES.OCTOPUS) {
-            this.spawnOctopusBob(config);
-        } else if (sp === SPECIES.STARFISH) {
-            this.spawnStarfishCreep(config);
-        } else if (sp === SPECIES.EEL && Math.random() < 0.55) {
-            this.spawnEelSlither(config);
-        } else {
-            this.spawnGeneric(config);
-        }
-
-        this.gravity = this.gravity ?? config.monsters.gravity;
-        this.rotation = this.rotation ?? (Math.random() - 0.5) * 0.35;
-        this.spin = this.spin ?? (Math.random() - 0.5) * 0.018;
-
-        if (sp === SPECIES.TURTLE) {
-            this.vx *= 0.62;
-            this.vy *= 0.58;
-            this.gravity *= 0.72;
-            this.spin *= 0.35;
-        }
-
-        if (sp === SPECIES.BLOWFISH) {
-            this.spin *= 0.22;
-        }
-
-        if (sp === SPECIES.STARFISH) {
-            this.spin = (Math.random() > 0.5 ? 1 : -1) * (0.006 + Math.random() * 0.008);
-        }
+        // All species use parabolic launch from bottom — like Fruit Ninja.
+        // Species-specific tweaks applied after base launch is set.
+        this.spawnParabolic(config, sp);
 
         this.image = loadedMonsterImages[this.monsterTypeIndex] || null;
         this.alive = true;
         this.points = config.pointsPerKill;
 
-        // Te Wheke (octopus) = Boss — larger and worth triple points
-        if (this.monsterTypeIndex === SPECIES.OCTOPUS) {
-            this.size *= 1.5;
+        // Te Wheke (octopus) = Boss — slightly smaller than normal (flicker makes up for it), triple points
+        if (sp === SPECIES.OCTOPUS) {
+            this.size *= 0.80;   // smaller than other monsters — harder to hit precisely
             this.points = config.pointsPerKill * 3;
             this.isBoss = true;
         } else {
             this.isBoss = false;
         }
+
+        // Per-species hit radius scale — simpler/bigger creatures are easier to hit.
+        // Octopus is overridden dynamically by opacity in checkHit().
+        const HIT_SCALES = {
+            [SPECIES.BLOWFISH]:  1.35,   // puffs up big — easiest
+            [SPECIES.STARFISH]:  1.20,   // slow tumbler
+            [SPECIES.TURTLE]:    1.10,   // large shell
+            [SPECIES.CRAB]:      1.00,   // normal
+            [SPECIES.EEL]:       0.95,   // wiggly, narrow
+            [SPECIES.ELECTRIC]:  0.85,   // small and twitchy
+            [SPECIES.OCTOPUS]:   1.00,   // overridden by flicker in checkHit
+        };
+        this.hitRadiusScale = HIT_SCALES[sp] ?? 1.0;
     }
 
-    spawnCornerGlide(config, opts = {}) {
-        const fromLeft = opts.fromLeft ?? Math.random() > 0.5;
+    /**
+     * Fruit-Ninja-style launch: spawn just below the screen at an assigned X zone,
+     * shoot upward with physics gravity, arc up then fall back down.
+     * Species tweaks (speed, spin, angle) are applied here too.
+     */
+    spawnParabolic(config, species) {
         const sp = config.monsters.speed;
-        const vyMid = (sp.vyMin + sp.vyMax) / 2;
-        // Stage 1 baseline vyMid ≈ 4.2; faster stages get proportionally shorter travel time
-        const travelFrames =
-            opts.travelFrames ??
-            Math.round((4.2 / vyMid) * (175 + Math.random() * 50));
-        const gravityScale = opts.gravityScale ?? (config.id === 1 ? 0.18 : 0.22);
 
-        // Spawn from bottom-left / bottom-right (slightly off-screen) and glide toward center.
-        const xEdge = fromLeft ? -this.size * 0.15 : gameW + this.size * 0.15;
-        const yEdge = gameH + this.size * (0.34 + Math.random() * 0.22);
+        // ── X position: use pre-assigned zone fraction from spawnMonster ──
+        const xFrac = this._targetXFraction ?? (0.15 + Math.random() * 0.70);
+        this.x = gameW * xFrac;
+        this.y = gameH + this.size * 0.6;   // just below screen bottom
 
-        const targetX =
-            opts.targetX ?? gameW * (0.5 + (Math.random() - 0.5) * 0.18);
-        const targetY =
-            opts.targetY ?? gameH * (0.46 + Math.random() * 0.08);
+        // ── Upward launch speed ───────────────────────────────────────────
+        let launchVy = sp.vyMin + Math.random() * (sp.vyMax - sp.vyMin);
 
-        this.x = xEdge;
-        this.y = yEdge;
+        // ── Horizontal drift: slight centre-bias + small random jitter ───
+        // Monsters launched from the left lean a bit right, and vice versa,
+        // so they arc visibly into the play area rather than off the side.
+        const centreBias = (0.5 - xFrac) * sp.vxMax * 0.5;
+        const jitter     = (Math.random() - 0.5) * sp.vxMax * 0.6;
+        let launchVx = centreBias + jitter;
 
-        this.gravity = config.monsters.gravity * gravityScale;
+        // ── Gravity ───────────────────────────────────────────────────────
+        this.gravity = config.monsters.gravity;
 
-        // Solve a simple constant-gravity trajectory so it lands near targetY at travelFrames.
-        const t = travelFrames;
-        const g = this.gravity;
-        this.vx = (targetX - this.x) / t;
-        this.vy = (targetY - this.y - 0.5 * g * t * t) / t;
-    }
-
-    spawnCrabHorizontal(config) {
-        const fromLeft = Math.random() > 0.5;
-        this.spawnCornerGlide(config, {
-            fromLeft,
-            targetY: gameH * (0.48 + Math.random() * 0.06),
-            gravityScale: 0.2
-        });
-        this.spin = (Math.random() - 0.5) * 0.004;
-        this.rotation = 0;
-    }
-
-    spawnOctopusBob(config) {
-        this.spawnCornerGlide(config, {
-            targetY: gameH * (0.46 + Math.random() * 0.1),
-            gravityScale: 0.25
-        });
-        this.spin = (Math.random() - 0.5) * 0.016;
-        this.rotation = (Math.random() - 0.5) * 0.2;
-        this.octopusBaseRot = this.rotation;
-    }
-
-    spawnStarfishCreep(config) {
-        this.spawnCornerGlide(config, {
-            targetY: gameH * (0.52 + Math.random() * 0.06),
-            gravityScale: 0.18
-        });
+        // ── Species-specific personality ─────────────────────────────────
         this.rotation = Math.random() * Math.PI * 2;
-    }
+        this.spin     = (Math.random() - 0.5) * 0.022;
 
-    spawnEelSlither(config) {
-        const fromLeft = Math.random() > 0.5;
-        this.spawnCornerGlide(config, {
-            fromLeft,
-            targetY: gameH * (0.42 + Math.random() * 0.12),
-            gravityScale: 0.2
-        });
-        this.rotation = fromLeft ? -0.15 : 0.15;
-        this.spin = 0;
-    }
+        if (species === SPECIES.OCTOPUS) {
+            // Boss: tall slow arc, but flickers in/out — hardest to hit
+            launchVy *= 0.82;
+            this.gravity *= 0.70;
+            this.spin           = (Math.random() - 0.5) * 0.012;
+            this.octopusBaseRot = this.rotation;
+            // Flicker: two overlapping sine waves → irregular visible/invisible rhythm
+            // flickerSpeed increases with stage so later stages flicker faster
+            this.flickerPhase = Math.random() * Math.PI * 2;
+            this.flickerSpeed = 0.14 + config.id * 0.04;   // s1:0.18 s4:0.30 — clearly visible
+        } else if (species === SPECIES.TURTLE) {
+            // Heavy: lower, slower, barely tumbles
+            launchVy *= 0.72;
+            launchVx *= 0.65;
+            this.gravity *= 1.18;
+            this.spin     = (Math.random() - 0.5) * 0.006;
+        } else if (species === SPECIES.CRAB) {
+            // Sideways scuttler: very low arc, dominant horizontal velocity.
+            // Direction is random left or right regardless of spawn zone — it
+            // "runs" across the screen. High gravity keeps it close to the ground.
+            launchVy *= 0.48;         // barely leaves ground
+            this.gravity *= 1.45;     // falls back quickly
+            const crabDir = Math.random() > 0.5 ? 1 : -1;
+            // Speed scales with stage but is always dominant over vy
+            const crabSpd = Math.min(13, Math.max(5.0, sp.vxMax * 1.6));
+            launchVx = crabDir * (crabSpd + Math.random() * 2.5);
+            this.spin     = 0;
+            this.rotation = 0;
+            this.crabWalkPhase = Math.random() * Math.PI * 2;
+        } else if (species === SPECIES.BLOWFISH) {
+            // Floaty — puffs up and drifts
+            launchVy *= 0.90;
+            this.gravity *= 0.80;
+            this.spin     = (Math.random() - 0.5) * 0.008;
+        } else if (species === SPECIES.EEL) {
+            // Wiggly — moderate arc, rotation that reads as slithering
+            this.rotation = launchVx > 0 ? -0.2 : 0.2;
+            this.spin     = 0;
+        } else if (species === SPECIES.STARFISH) {
+            // Slow tumbler
+            launchVy *= 0.85;
+            this.gravity *= 0.90;
+            this.spin     = (Math.random() > 0.5 ? 1 : -1) * (0.008 + Math.random() * 0.010);
+        } else if (species === SPECIES.ELECTRIC) {
+            // Twitchy — same arc but will zigzag in update()
+            this.spin     = (Math.random() - 0.5) * 0.030;
+        }
 
-    spawnGeneric(config) {
-        const fromLeft = Math.random() > 0.5;
-        this.spawnCornerGlide(config, {
-            fromLeft,
-            targetY: gameH * (0.46 + Math.random() * 0.12),
-            gravityScale: 0.22
-        });
+        this.vx = launchVx;
+        this.vy = -launchVy;   // negative = upward
     }
 
     getSpawnScale() {
@@ -812,7 +971,9 @@ class Monster {
     /** Blowfish puff scale; others stay 1 */
     getSpeciesScale() {
         if (this.monsterTypeIndex === SPECIES.BLOWFISH) {
-            return 0.78 + 0.22 * Math.sin(this.spawnAge * this.puffSpeed + this.puffPhase);
+            // More dramatic range (0.55 → 1.0) so inflate/deflate is very visible
+            const t = (Math.sin(this.spawnAge * this.puffSpeed + this.puffPhase) + 1) * 0.5; // 0→1
+            return 0.55 + 0.45 * t;
         }
         return 1;
     }
@@ -847,12 +1008,30 @@ class Monster {
             this.bobPhase += 0.065;
             this.y += Math.sin(this.bobPhase) * 0.55 * moveK;
             this.x += Math.cos(this.bobPhase * 0.7) * 0.35 * moveK;
+            // Flicker: two overlapping sine waves → irregular rhythm, clearly visible fade in/out
+            this.flickerPhase = (this.flickerPhase || 0) + (this.flickerSpeed || 0.18);
+            const w1 = Math.sin(this.flickerPhase);
+            const w2 = Math.sin(this.flickerPhase * 1.73 + 1.1);
+            // Sharpen the wave so it spends more time near 0 or 1, less in between
+            const raw = (w1 + w2 * 0.6) / 1.6;               // −1 … +1
+            const sharpened = Math.sign(raw) * Math.pow(Math.abs(raw), 0.55);
+            this.opacity = Math.max(0.05, Math.min(1.0, (sharpened + 1) * 0.5));
             const base = this.octopusBaseRot ?? this.rotation;
             this.rotation = base + Math.sin(this.bobPhase * 0.5) * 0.28;
         } else if (sp === SPECIES.STARFISH) {
             this.rotation += this.spin;
         } else if (sp === SPECIES.CRAB) {
-            this.rotation = 0;
+            // Walking bob: rapid up-down bounce simulating scuttling legs
+            this.crabWalkPhase += 0.32;
+            this.y += Math.sin(this.crabWalkPhase) * 1.1 * moveK;
+            // Slight body lean based on walk rhythm (rock side-to-side)
+            this.rotation = Math.sin(this.crabWalkPhase * 0.55) * 0.07;
+        } else if (sp === SPECIES.BLOWFISH) {
+            // Inhale → float upward; exhale → sink back down.
+            // puffVal: −1 (deflated/small) to +1 (inflated/big)
+            const puffVal = Math.sin(this.spawnAge * this.puffSpeed + this.puffPhase);
+            this.y -= puffVal * 0.65 * moveK;   // positive = rise when puffed
+            this.rotation += this.spin * 0.3;   // very slow gentle tumble
         } else {
             this.rotation += this.spin;
         }
@@ -862,22 +1041,20 @@ class Monster {
         this.x += this.vx * moveK;
         this.y += this.vy * moveK;
 
-        if (this.x < this.size / 2) {
-            this.x = this.size / 2;
-            this.vx = Math.abs(this.vx);
-        } else if (this.x > gameW - this.size / 2) {
-            this.x = gameW - this.size / 2;
-            this.vx = -Math.abs(this.vx);
-        }
+        // Soft side clamp — nudge back rather than hard bounce,
+        // so parabolic arcs near the edge still look natural.
+        if (this.x < -this.size) this.x = -this.size;
+        if (this.x > gameW + this.size) this.x = gameW + this.size;
 
-        const out =
-            this.y > gameH + 420 ||
-            this.y < -this.size - 220 ||
-            this.x < -this.size - 200 ||
-            this.x > gameW + this.size + 200;
+        // Monster has fallen back below the screen after arcing up → missed!
+        // We only count it as "out" on the way DOWN (vy > 0) to avoid
+        // penalising the brief moment it spawns below the screen.
+        const fellThrough = this.vy > 0 && this.y > gameH + this.size * 0.6;
+        // Also remove if it flew wildly off screen without arcing back
+        const lostOffside = this.x < -this.size * 3 || this.x > gameW + this.size * 3;
 
-        if (out) {
-            if (this.y > gameH - 80) {
+        if (fellThrough || lostOffside) {
+            if (fellThrough) {
                 gameState.lives--;
                 showComboBreak(gameState.combo);
                 gameState.combo = 0;
@@ -959,12 +1136,31 @@ class Monster {
             ctx2.textBaseline = "middle";
             ctx2.fillText("Creature", 0, 0);
         }
+
+        // Boss octopus: pulse a golden glow when nearly fully visible (the "strike window")
+        if (this.isBoss && this.opacity > 0.75) {
+            const glowA = (this.opacity - 0.75) / 0.25;   // 0→1 as opacity goes 0.75→1
+            ctx2.save();
+            ctx2.globalAlpha = glowA * 0.55;
+            ctx2.strokeStyle = "#ffd166";
+            ctx2.lineWidth   = 5 + 4 * glowA;
+            ctx2.shadowColor = "#ffd166";
+            ctx2.shadowBlur  = 28 * glowA;
+            ctx2.beginPath();
+            ctx2.arc(0, 0, half + 8, 0, Math.PI * 2);
+            ctx2.stroke();
+            ctx2.restore();
+        }
+
         ctx2.restore();
     }
 
     checkHit(px, py) {
         if (!this.alive) return false;
-        const r = this.getDrawScale() / 2 + HIT_RADIUS_EXTRA;
+        let scale = this.hitRadiusScale ?? 1.0;
+        // Boss octopus: hit radius shrinks with opacity — must swing while it's visible
+        if (this.isBoss) scale = Math.max(0.10, this.opacity);
+        const r = (this.getDrawScale() / 2 + HIT_RADIUS_EXTRA) * scale;
         const dx = this.x - px;
         const dy = this.y - py;
         return dx * dx + dy * dy < r * r;
@@ -1275,6 +1471,7 @@ if (errorDismissBtn) errorDismissBtn.addEventListener("click", () => {
 function showStoryCard(stageIndex, onBegin) {
     const story = STAGE_STORIES[stageIndex];
     if (!story || !storyCardOverlay) { onBegin(); return; }
+
     storyCardStageEl.textContent = story.stage;
     storyCardTitleEl.textContent = story.title;
     storyCardDescEl.textContent  = story.desc;
@@ -1284,13 +1481,48 @@ function showStoryCard(stageIndex, onBegin) {
     } else {
         storyCardImgEl.classList.add("hidden");
     }
-    storyCardOverlay.classList.remove("hidden");
-    const begin = () => {
-        storyCardOverlay.classList.add("hidden");
-        storyCardBeginBtn.removeEventListener("click", begin);
-        onBegin();
+
+    // Reset any previous fade-out state
+    storyCardOverlay.classList.remove("story-card-overlay--fadeout", "hidden");
+
+    // Inject countdown bar (remove old one first)
+    let countdownEl = storyCardOverlay.querySelector(".story-card-countdown");
+    if (!countdownEl) {
+        countdownEl = document.createElement("div");
+        countdownEl.className = "story-card-countdown";
+        countdownEl.innerHTML = '<div class="story-card-countdown-bar"></div>';
+        storyCardOverlay.appendChild(countdownEl);
+    }
+    const bar = countdownEl.querySelector(".story-card-countdown-bar");
+    bar.classList.remove("story-card-countdown-bar--run");
+
+    // Kick off countdown animation on next frame (so CSS transition fires)
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => bar.classList.add("story-card-countdown-bar--run"));
+    });
+
+    // After 3 s: fade out the overlay, then hide and start game
+    const dismissTimer = setTimeout(() => {
+        storyCardOverlay.classList.add("story-card-overlay--fadeout");
+        setTimeout(() => {
+            storyCardOverlay.classList.add("hidden");
+            storyCardOverlay.classList.remove("story-card-overlay--fadeout");
+            onBegin();
+        }, 700);   // matches CSS transition duration
+    }, 3000);
+
+    // Safety: clicking anywhere on the overlay still skips the wait
+    const skipOnce = () => {
+        clearTimeout(dismissTimer);
+        storyCardOverlay.removeEventListener("click", skipOnce);
+        storyCardOverlay.classList.add("story-card-overlay--fadeout");
+        setTimeout(() => {
+            storyCardOverlay.classList.add("hidden");
+            storyCardOverlay.classList.remove("story-card-overlay--fadeout");
+            onBegin();
+        }, 700);
     };
-    storyCardBeginBtn.addEventListener("click", begin);
+    storyCardOverlay.addEventListener("click", skipOnce);
 }
 
 // ─── Stage overview / journey map ────────────────────────────────────────────
@@ -1300,6 +1532,145 @@ function showStoryCard(stageIndex, onBegin) {
  * @param {function} onBegin         Called with no args when player clicks a stage card;
  *                                   initStage() is called internally before onBegin().
  */
+// ── Overview card helpers ─────────────────────────────────────────
+/** Render speed as filled/empty dot indicators  e.g. ●●○○ */
+function ovSpeedDots(speedLabel) {
+    const lvl = { Calm: 1, Moderate: 2, Fast: 3, Fierce: 4 }[speedLabel] || 1;
+    const on  = `<span class="ov-dot ov-dot--on">●</span>`;
+    const off = `<span class="ov-dot ov-dot--off">○</span>`;
+    return on.repeat(lvl) + off.repeat(4 - lvl);
+}
+
+/** Build icon stats grid — icon + value + label, 5 columns (2 for locked) */
+function ovIconStatsHTML(details, isLocked) {
+    if (!details || !details.length) return "";
+    const creatures = (details[0]?.value || "—").replace(/\s/g, "");
+    const speedLbl  = details[1]?.value || "Calm";
+    const sizeLbl   = details[2]?.value || "—";
+    const ptsRaw    = details[3]?.value || "—";
+    const livesRaw  = details[4]?.value || "—";
+    const livesNum  = (livesRaw.match(/\d+/) || ["—"])[0];
+
+    return `<div class="ov-icon-stats">
+        <div class="ov-istat" tabindex="0" data-tip="Sea creatures per wave — defeat them all to advance!">
+            <span class="ov-istat-icon">🐙</span>
+            <div class="ov-istat-text">
+                <span class="ov-istat-val">${creatures}</span>
+                <span class="ov-istat-lbl">Creatures</span>
+            </div>
+        </div>
+        <div class="ov-istat" tabindex="0" data-tip="How fast creatures move — Calm is easiest, Fierce is hardest">
+            <span class="ov-istat-icon">⚡</span>
+            <div class="ov-istat-text">
+                <span class="ov-istat-val">${speedLbl}</span>
+                <span class="ov-istat-lbl">Speed</span>
+            </div>
+        </div>
+        <div class="ov-istat" tabindex="0" data-tip="Size of sea creatures you face">
+            <span class="ov-istat-icon">📐</span>
+            <div class="ov-istat-text">
+                <span class="ov-istat-val">${sizeLbl}</span>
+                <span class="ov-istat-lbl">Size</span>
+            </div>
+        </div>
+        <div class="ov-istat" tabindex="0" data-tip="Points earned per creature defeated">
+            <span class="ov-istat-icon">⭐</span>
+            <div class="ov-istat-text">
+                <span class="ov-istat-val">${ptsRaw}</span>
+                <span class="ov-istat-lbl">Points</span>
+            </div>
+        </div>
+        <div class="ov-istat" tabindex="0" data-tip="Your Mauri (life force) — lives before the journey ends">
+            <span class="ov-istat-icon">❤️</span>
+            <div class="ov-istat-text">
+                <span class="ov-istat-val">${livesNum}</span>
+                <span class="ov-istat-lbl">Lives</span>
+            </div>
+        </div>
+    </div>`;
+}
+// ─────────────────────────────────────────────────────────────────
+
+let _ovTipInited = false;
+function initOvTooltip() {
+    if (_ovTipInited) return;
+    _ovTipInited = true;
+
+    // Create tooltip element once
+    let tip = document.getElementById("ov-tip");
+    if (!tip) {
+        tip = document.createElement("div");
+        tip.id = "ov-tip";
+        tip.setAttribute("role", "tooltip");
+        document.body.appendChild(tip);
+    }
+
+    const cardsEl = document.getElementById("ov-cards");
+    if (!cardsEl) return;
+
+    let hideTimer = null;
+
+    function position(el) {
+        const rect = el.getBoundingClientRect();
+        const tw = tip.offsetWidth || 220;
+        const th = tip.offsetHeight || 60;
+        let left = rect.left + rect.width / 2 - tw / 2;
+        let top  = rect.top - th - 12;
+        if (top < 8) top = rect.bottom + 12;   // flip below if no room above
+        left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+        tip.style.left = left + "px";
+        tip.style.top  = top  + "px";
+    }
+
+    function show(el) {
+        clearTimeout(hideTimer);
+        const text = el.dataset.tip;
+        if (!text) return;
+        tip.textContent = text;
+        tip.classList.add("ov-tip--on");
+        position(el);
+        tip._src = el;
+    }
+
+    function hide(delay) {
+        hideTimer = setTimeout(() => {
+            tip.classList.remove("ov-tip--on");
+            tip._src = null;
+        }, delay ?? 120);
+    }
+
+    // Hover
+    cardsEl.addEventListener("mouseover", (e) => {
+        const el = e.target.closest("[data-tip]");
+        if (el) show(el);
+    });
+    cardsEl.addEventListener("mouseout", (e) => {
+        if (e.target.closest("[data-tip]")) hide();
+    });
+
+    // Keyboard focus
+    cardsEl.addEventListener("focusin", (e) => {
+        const el = e.target.closest("[data-tip]");
+        if (el) show(el);
+    });
+    cardsEl.addEventListener("focusout", (e) => {
+        if (e.target.closest("[data-tip]")) hide(0);
+    });
+
+    // Tap / click toggle
+    cardsEl.addEventListener("click", (e) => {
+        const el = e.target.closest("[data-tip]");
+        if (!el) { hide(0); return; }
+        if (tip._src === el && tip.classList.contains("ov-tip--on")) {
+            hide(0);
+        } else {
+            show(el);
+        }
+        e.stopPropagation();
+    });
+    document.addEventListener("click", () => hide(0));
+}
+
 function showStageOverview(completedCount, onBegin) {
     const screen = document.getElementById("stage-overview-screen");
     if (!screen) { onBegin(); return; }   // graceful fallback if HTML isn't present
@@ -1335,43 +1706,32 @@ function showStageOverview(completedCount, onBegin) {
         card.setAttribute("aria-label",
             `Stage ${i + 1}: ${info.maoiName} — ${cardState}`);
 
-        const detailsHTML = (info.details || []).map(d => `
-            <li class="ov-detail-row">
-                <span class="ov-detail-label">${d.label}</span>
-                <span class="ov-detail-value">${d.value}</span>
-            </li>`).join("");
+        const isLocked = cardState === "locked";
+        const unlockHint = i > 0 ? `Complete Stage ${i} to unlock` : "Locked";
 
         card.innerHTML = `
             <div class="ov-img" style="background-image:url('${info.cardImg || cfg.background}')">
                 <span class="ov-num">${i + 1}</span>
-                <span class="ov-motto">${info.motto}</span>
-                ${cardState === "locked"
-                    ? '<span class="ov-lock" aria-hidden="true">🔒</span>'
-                    : ""}
-                ${cardState === "done"
-                    ? '<span class="ov-check" aria-hidden="true">✓</span>'
-                    : ""}
+                <span class="ov-duration">⏱ ${info.minutes} min</span>
+                ${isLocked ? '<span class="ov-lock" aria-hidden="true">🔒</span>' : ""}
+                ${cardState === "done" ? '<span class="ov-check" aria-hidden="true">✓</span>' : ""}
             </div>
             <div class="ov-body">
-                <h3 class="ov-name">${info.maoiName}</h3>
-                <p class="ov-subtitle">${info.subtitle}</p>
-                <p class="ov-desc">${info.desc}</p>
-                <div class="ov-meta">
-                    <span class="ov-time">⏱ ${info.minutes} min</span>
-                    <span class="ov-pts">🎯 ${cfg.targetScore} pts</span>
+                <div class="ov-top">
+                    <h3 class="ov-name">${info.maoiName}</h3>
+                    <p class="ov-subtitle">${info.subtitle}</p>
+                    <p class="ov-desc">${info.desc}</p>
                 </div>
-                <ul class="ov-details" aria-label="Stage details">
-                    ${detailsHTML}
-                </ul>
+                ${ovIconStatsHTML(info.details, isLocked)}
                 <div class="ov-action">
-                    ${cardState === "done"
-                        ? '<span class="ov-complete-label">Ka pai! · Complete</span>'
-                        : ""}
                     ${cardState === "active"
-                        ? `<button type="button" class="ov-begin-btn" data-index="${i}">Timata — Begin →</button>`
+                        ? `<button type="button" class="ov-begin-btn" data-index="${i}">Begin →</button>`
                         : ""}
-                    ${cardState === "locked"
-                        ? '<span class="ov-locked-label">Kei muri · Locked</span>'
+                    ${cardState === "done"
+                        ? '<span class="ov-complete-label">✓</span>'
+                        : ""}
+                    ${isLocked
+                        ? `<span class="ov-unlock-hint">${unlockHint}</span>`
                         : ""}
                 </div>
             </div>`;
@@ -1389,6 +1749,7 @@ function showStageOverview(completedCount, onBegin) {
         });
     });
 
+    initOvTooltip();
     screen.classList.remove("hidden");
 }
 
@@ -1403,8 +1764,10 @@ function showAffirmation(x, y) {
     const el = document.createElement("div");
     el.className = "affirmation-text";
     el.textContent = text;
-    el.style.left = `${Math.min(Math.max(x - 60, 4), gameW - 140)}px`;
-    el.style.top  = `${Math.max(y - 70, 10)}px`;
+    // Pin to top-centre so it never overlaps the player's hands
+    el.style.left      = "50%";
+    el.style.transform = "translateX(-50%)";
+    el.style.top       = `${Math.round(gameH * 0.07)}px`;
     document.getElementById("game-container").appendChild(el);
     setTimeout(() => el.remove(), 1500);
 }
@@ -1421,8 +1784,9 @@ function showKupeVictory(x, y) {
     const el = document.createElement("div");
     el.className = "affirmation-text kupe-victory";
     el.textContent = text;
-    el.style.left = `${Math.min(Math.max(x - 80, 4), gameW - 200)}px`;
-    el.style.top  = `${Math.max(y - 90, 10)}px`;
+    el.style.left      = "50%";
+    el.style.transform = "translateX(-50%)";
+    el.style.top       = `${Math.round(gameH * 0.07)}px`;
     document.getElementById("game-container").appendChild(el);
     setTimeout(() => el.remove(), 2200);
 }
@@ -1521,8 +1885,10 @@ function showComboText(x, y, text) {
     const el = document.createElement("div");
     el.className = "combo-text";
     el.textContent = text;
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
+    // Show just below the affirmation so they stack cleanly at top
+    el.style.left      = "50%";
+    el.style.transform = "translateX(-50%)";
+    el.style.top       = `${Math.round(gameH * 0.14)}px`;
     document.getElementById("game-container").appendChild(el);
     setTimeout(() => el.remove(), 1400);
 }
@@ -1547,12 +1913,33 @@ function spawnMonster() {
                 Math.random() * (config.monsters.spawnCount.max - config.monsters.spawnCount.min + 1)
             );
         const count = Math.min(desired, maxPossible);
+
+        // Stagger: stage 1 = 550 ms between launches, stage 4 = 220 ms
+        const staggerMs = Math.round(550 / (1 + gameState.currentStage * 0.45));
+
+        // Spread launch X-zones evenly across screen (20 %–80 %) with slight jitter.
+        // Narrowed from 15-85% so monsters never appear right at the edge where
+        // elderly players struggle to reach. Forces left/right arm exercise without
+        // requiring extreme extension.
+        const zoneWidth = 0.60 / Math.max(count - 1, 1);
+        const baseZones = Array.from({ length: count }, (_, i) =>
+            count === 1 ? 0.5 : 0.20 + i * zoneWidth
+        );
+        // Simple shuffle so monsters don't always come in the same order
+        for (let i = baseZones.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [baseZones[i], baseZones[j]] = [baseZones[j], baseZones[i]];
+        }
+
         for (let i = 0; i < count; i++) {
+            const targetXFraction = Math.max(0.18, Math.min(0.82,
+                baseZones[i] + (Math.random() - 0.5) * Math.min(zoneWidth * 0.4, 0.06)
+            ));
             setTimeout(() => {
                 if (gameState.isPlaying) {
-                    gameState.monsters.push(new Monster(config));
+                    gameState.monsters.push(new Monster(config, { targetXFraction }));
                 }
-            }, i * 180);
+            }, i * staggerMs);
         }
     }
 
@@ -1625,6 +2012,72 @@ function showStageComplete() {
     stageCompleteScreen.classList.remove("hidden");
 }
 
+// ─── Player data — localStorage, no registration needed ──────────────────────
+const PLAYER_STORAGE_KEY = "maori_hero_player_v1";
+
+const WARRIOR_TITLES = [
+    { min: 0,    title: "Ākonga",                subtitle: "Learner" },
+    { min: 150,  title: "Toa Hou",               subtitle: "New Warrior" },
+    { min: 350,  title: "Toa",                   subtitle: "Warrior" },
+    { min: 600,  title: "Toa Māia",              subtitle: "Brave Warrior" },
+    { min: 850,  title: "Kaitiaki",              subtitle: "Guardian" },
+    { min: 1100, title: "Tohunga",               subtitle: "Expert" },
+    { min: 1400, title: "Rangatira o te Moana",  subtitle: "Chief of the Sea" },
+];
+
+function getWarriorTitle(score) {
+    for (let i = WARRIOR_TITLES.length - 1; i >= 0; i--) {
+        if (score >= WARRIOR_TITLES[i].min) return WARRIOR_TITLES[i];
+    }
+    return WARRIOR_TITLES[0];
+}
+
+function loadPlayerData() {
+    try { return JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY)) || null; }
+    catch { return null; }
+}
+
+function savePlayerData(data) {
+    try { localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(data)); } catch {}
+}
+
+function recordGameScore(totalScore) {
+    let data = loadPlayerData() || { name: "Toa", scores: [] };
+    const entry = { score: totalScore, date: new Date().toLocaleDateString("en-NZ") };
+    data.scores.unshift(entry);
+    if (data.scores.length > 20) data.scores = data.scores.slice(0, 20);
+    savePlayerData(data);
+    return data;
+}
+
+function getPersonalBest(scores) {
+    return scores.length ? Math.max(...scores.map(s => s.score)) : 0;
+}
+
+function showNameSetup(onDone) {
+    const overlay = document.getElementById("name-setup-overlay");
+    if (!overlay) { onDone(); return; }
+    overlay.classList.remove("hidden");
+
+    const input  = document.getElementById("player-name-input");
+    const btn    = document.getElementById("name-setup-confirm");
+
+    // Small delay so the overlay animation finishes before auto-focusing
+    setTimeout(() => input.focus(), 120);
+
+    const confirm = () => {
+        const name = input.value.trim() || "Toa";
+        savePlayerData({ name, scores: [] });
+        overlay.classList.add("hidden");
+        onDone();
+    };
+
+    btn.addEventListener("click", confirm, { once: true });
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") confirm(); }, { once: true });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function showGameComplete() {
     hideGripHintBar();
     hideCameraBadge();
@@ -1632,9 +2085,48 @@ function showGameComplete() {
     hideEmptyState();
     stopAmbience();
     playStageCompleteSound();
+
+    // Record score; get fresh data
+    const data       = recordGameScore(gameState.totalScore);
+    const allScores  = data.scores;
+    const best       = getPersonalBest(allScores);
+    // Previous best = best before this game (exclude first entry)
+    const prevBest   = getPersonalBest(allScores.slice(1));
+    const isNewBest  = gameState.totalScore >= prevBest && allScores.length === 1
+                       || gameState.totalScore > prevBest;
+
+    // Warrior badge
+    const wt = getWarriorTitle(best);
+    const nameEl  = document.getElementById("gc-warrior-name");
+    const titleEl = document.getElementById("gc-warrior-title");
+    if (nameEl)  nameEl.textContent  = data.name;
+    if (titleEl) titleEl.textContent = `${wt.title} — ${wt.subtitle}`;
+
+    // Scores
     totalScoreEl.textContent = gameState.totalScore;
+    const bestEl = document.getElementById("gc-personal-best");
+    if (bestEl) bestEl.textContent = best;
+
+    const newBestEl = document.getElementById("gc-new-best");
+    if (newBestEl) newBestEl.classList.toggle("hidden", !isNewBest);
+
+    // Top-5 leaderboard (sorted by score desc)
+    const lbEl = document.getElementById("gc-lb-list");
+    if (lbEl) {
+        const medals = ["🥇", "🥈", "🥉", "4", "5"];
+        const top5   = [...allScores].sort((a, b) => b.score - a.score).slice(0, 5);
+        lbEl.innerHTML = top5.map((e, i) => {
+            const isCurrent = i === 0 && e.score === gameState.totalScore;
+            return `<li class="gc-lb-row${isCurrent ? " gc-lb-row--current" : ""}">
+                <span class="gc-lb-rank">${medals[i] ?? (i + 1)}</span>
+                <span class="gc-lb-score">${e.score}</span>
+                <span class="gc-lb-date">${e.date}</span>
+            </li>`;
+        }).join("");
+    }
+
     gameCompleteScreen.style.backgroundImage = "url('img/story-card/5-Win.png')";
-    gameCompleteScreen.style.backgroundSize = "cover";
+    gameCompleteScreen.style.backgroundSize  = "cover";
     gameCompleteScreen.style.backgroundPosition = "center";
     gameCompleteScreen.classList.remove("hidden");
 }
@@ -2079,7 +2571,27 @@ function onResults(results) {
     if (!_poseReady && results.poseLandmarks) {
         _poseReady = true;
         if (loadingOverlay) loadingOverlay.classList.add("hidden");
+        // Model is warm — camera check moves to "searching for body" phase
+        setCameraCheckStatus("searching");
     }
+
+    // ── Camera check: detect if the player is well-positioned ────────
+    if (!_cameraCheckBodyFound && results.poseLandmarks) {
+        const lm = results.poseLandmarks;
+        const ls = lm[11]; // left shoulder
+        const rs = lm[12]; // right shoulder
+        const lw = lm[15]; // left wrist
+        const rw = lm[16]; // right wrist
+        const bothShoulders = ls && rs && ls.visibility > 0.5 && rs.visibility > 0.5;
+        const oneWrist      = (lw && lw.visibility > 0.4) || (rw && rw.visibility > 0.4);
+        if (bothShoulders && oneWrist) {
+            _cameraCheckBodyFound = true;
+            setCameraCheckStatus("found");
+            if (ccContinueBtn) ccContinueBtn.disabled = false;
+        }
+    }
+    // ─────────────────────────────────────────────────────────────────
+
     drawVirtualBackground(results);
 
     if (results.poseLandmarks && gameState.isPlaying) {
@@ -2196,16 +2708,8 @@ function initStage(stageIndex) {
     updateUI();
 }
 
-async function startGame() {
-    gameState.totalScore = 0;
-    // Hide all game screens; initStage is deferred to the overview "Begin" click
-    startScreen.classList.add("hidden");
-    stageCompleteScreen.classList.add("hidden");
-    gameCompleteScreen.classList.add("hidden");
-    gameOverScreen.classList.add("hidden");
-
+function launchStageOverview() {
     showStageOverview(0, () => {
-        // initStage(0) already called inside showStageOverview before this cb fires
         showStoryCard(gameState.currentStage, () => {
             gameState.isPlaying = true;
             startAmbience();
@@ -2216,6 +2720,21 @@ async function startGame() {
             gameLoop();
         });
     });
+}
+
+async function startGame() {
+    gameState.totalScore = 0;
+    startScreen.classList.add("hidden");
+    stageCompleteScreen.classList.add("hidden");
+    gameCompleteScreen.classList.add("hidden");
+    gameOverScreen.classList.add("hidden");
+
+    // First-time player: ask for name before entering the game
+    if (!loadPlayerData()) {
+        showNameSetup(launchStageOverview);
+    } else {
+        launchStageOverview();
+    }
 }
 
 function nextStage() {
@@ -2259,10 +2778,14 @@ function buildWeaponPicker() {
         if (w.color) btn.style.setProperty("--wc-accent", w.color);
         const imgHTML = w.noWeapon
             ? `<div class="wc-img-wrap wc-img-hands" aria-hidden="true">
-                   <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" class="wc-hands-svg">
-                       <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="2.5" stroke-dasharray="6 4" opacity="0.4"/>
-                       <path d="M22 38 C22 26 26 22 32 20 C38 22 42 26 42 38" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-                       <ellipse cx="32" cy="41" rx="10" ry="7" stroke="currentColor" stroke-width="2.5"/>
+                   <svg viewBox="0 0 80 96" fill="none" xmlns="http://www.w3.org/2000/svg" class="wc-hands-svg">
+                       <!-- Palm -->
+                       <path d="M18 52 C16 44 16 36 18 28 C18 24 22 22 26 24 L26 18 C26 14 30 12 33 14 C34 10 38 9 41 12 C42 8 46 8 48 12 L48 26 C52 24 56 26 56 32 L56 54 C56 66 48 76 36 78 C24 78 18 68 18 56 Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+                       <!-- Finger dividers -->
+                       <line x1="26" y1="24" x2="26" y2="44" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+                       <line x1="33" y1="14" x2="33" y2="44" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+                       <line x1="41" y1="12" x2="41" y2="44" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+                       <line x1="48" y1="12" x2="48" y2="44" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
                    </svg>
                </div>`
             : `<div class="wc-img-wrap" aria-hidden="true">
@@ -2290,6 +2813,7 @@ function buildWeaponPicker() {
 
 async function init() {
     preloadImages();
+    initCameraCheck(); // start preview loop + failsafe timer
 
     const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }
@@ -2347,6 +2871,9 @@ async function init() {
 init().catch((err) => {
     console.error(err);
     if (loadingOverlay) loadingOverlay.classList.add("hidden");
+    // Show error state in camera check screen (stays visible with instructions)
+    setCameraCheckStatus("error");
+    if (ccContinueBtn) ccContinueBtn.disabled = true;
     const cameraStatusEl = document.getElementById("camera-status");
     if (cameraStatusEl) {
         cameraStatusEl.textContent =

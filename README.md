@@ -146,3 +146,16 @@ This project is open source and available under the MIT License. Māori cultural
 *"Kia kaha, kia maia, kia manawanui"* - Be strong, be brave, be steadfast
 
 Let your arms be your strength and your heart be your guide 🌊
+
+
+
+
+
+
+
+
+
+
+
+
+
