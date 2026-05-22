@@ -1566,13 +1566,6 @@ function ovIconStatsHTML(details, isLocked) {
                 <span class="ov-istat-lbl">Speed</span>
             </div>
         </div>
-        <div class="ov-istat" tabindex="0" data-tip="Size of sea creatures you face">
-            <span class="ov-istat-icon">📐</span>
-            <div class="ov-istat-text">
-                <span class="ov-istat-val">${sizeLbl}</span>
-                <span class="ov-istat-lbl">Size</span>
-            </div>
-        </div>
         <div class="ov-istat" tabindex="0" data-tip="Points earned per creature defeated">
             <span class="ov-istat-icon">⭐</span>
             <div class="ov-istat-text">

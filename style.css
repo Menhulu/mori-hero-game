@@ -1905,7 +1905,7 @@ body {
 /* ── Card image panel ────────────────────────────────────────────── */
 .ov-img {
     position: relative;
-    height: clamp(170px, 22vw, 220px);
+    height: clamp(130px, 18vw, 190px);
     background-size: cover;
     background-position: center center;
     flex-shrink: 0;
@@ -2001,6 +2001,7 @@ body {
     flex: 1;
     min-height: 0;
     gap: 10px;
+    overflow: hidden;
 }
 
 .ov-top {
@@ -2027,8 +2028,8 @@ body {
 
 .ov-desc {
     color: rgba(202, 240, 248, 0.65);
-    font-size: clamp(13px, 1.1vw, 15px);
-    line-height: 1.6;
+    font-size: clamp(12px, 1vw, 14px);
+    line-height: 1.5;
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -2045,19 +2046,15 @@ body {
     border-top: 1px solid rgba(142, 202, 230, 0.15);
 }
 
-/* 5th item (odd last-child in a 2-col grid) spans full width */
-.ov-istat:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-}
 
 .ov-istat {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
+    gap: 7px;
     cursor: help;
-    padding: 8px 12px;
-    border-radius: 10px;
+    padding: 5px 9px;
+    border-radius: 8px;
     background: rgba(142, 202, 230, 0.06);
     border: 1px solid rgba(142, 202, 230, 0.1);
     transition: background 0.15s, border-color 0.15s;
@@ -2067,7 +2064,7 @@ body {
     border-color: rgba(142, 202, 230, 0.25);
 }
 
-.ov-istat-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+.ov-istat-icon { font-size: 18px; line-height: 1; flex-shrink: 0; }
 
 .ov-istat-text {
     display: flex;
@@ -2095,6 +2092,7 @@ body {
 .ov-action {
     margin-top: auto;
     padding-top: 10px;
+    flex-shrink: 0;
 }
 
 /* ── Stat tooltip popup ─────────────────────────────────────────── */
