@@ -6,17 +6,17 @@
 const STAGE_CONFIGS = [
     {
         // Stage 1 — Calm: slow high arcs, large targets, forgiving
-        // Monsters hang in the air ~3+ s — plenty of time to swing
+        // Target ~2.5 min: ~15 kills/min × 10 pts = 150 pts/min → 400 pts ≈ 2.7 min
         id: 1,
         name: "Shallow warm-up",
-        targetScore: 160,
-        lives: 7,
+        targetScore: 400,
+        lives: 9,
         background: "img/background01.png",
         monsters: {
             size: { min: 120, max: 185 },
-            speed: { vyMin: 11, vyMax: 14, vxMax: 1.8 },   // higher launch → taller arcs
-            gravity: 0.07,                                   // very low gravity → huge, lazy arc (hang ~4 s)
-            spawnInterval: { min: 3800, max: 5000 },         // longer gaps — very relaxed pace
+            speed: { vyMin: 11, vyMax: 14, vxMax: 1.8 },
+            gravity: 0.07,
+            spawnInterval: { min: 3800, max: 5000 },
             spawnCount: { min: 3, max: 4 },
             levelUpBonus: 0.15
         },
@@ -24,10 +24,11 @@ const STAGE_CONFIGS = [
     },
     {
         // Stage 2 — Moderate: slightly faster arcs, still comfortable
+        // Target ~2.5 min: ~15 kills/min × 15 pts = 225 pts/min → 550 pts ≈ 2.4 min
         id: 2,
         name: "Surf zone",
-        targetScore: 280,
-        lives: 7,
+        targetScore: 550,
+        lives: 9,
         background: "img/background02.png",
         monsters: {
             size: { min: 95, max: 152 },
@@ -41,34 +42,35 @@ const STAGE_CONFIGS = [
     },
     {
         // Stage 3 — Moderate challenge: gentle step up from Stage 2
-        // Lower vy + gravity keeps arcs slow; slightly shorter intervals add pressure
+        // Target ~2.5 min: ~15 kills/min × 20 pts = 300 pts/min → 750 pts ≈ 2.5 min
         id: 3,
         name: "Deep current",
-        targetScore: 460,
-        lives: 6,
+        targetScore: 750,
+        lives: 8,
         background: "img/background03.png",
         monsters: {
             size: { min: 88, max: 138 },
-            speed: { vyMin: 12, vyMax: 15, vxMax: 4.0 },   // same vy range as Stage 2; only vx nudged up
-            gravity: 0.15,                                   // barely more than Stage 2 (0.14) → arcs still hang ~3 s
-            spawnInterval: { min: 2600, max: 3600 },         // only slightly tighter than Stage 2 (3000–4000)
-            spawnCount: { min: 3, max: 4 },                  // capped at 4 per wave (was 5)
+            speed: { vyMin: 12, vyMax: 15, vxMax: 4.0 },
+            gravity: 0.15,
+            spawnInterval: { min: 2600, max: 3600 },
+            spawnCount: { min: 3, max: 4 },
             levelUpBonus: 0.45
         },
         pointsPerKill: 20
     },
     {
-        // Stage 4 — Challenging: what Stage 3 used to feel like, now the true peak
+        // Stage 4 — Challenging: the true peak
+        // Target ~2.5 min: ~15 kills/min × 28 pts = 420 pts/min → 1050 pts ≈ 2.5 min
         id: 4,
         name: "Final abyss",
-        targetScore: 640,
-        lives: 5,
+        targetScore: 1050,
+        lives: 7,
         background: "img/background03.png",
         monsters: {
             size: { min: 80, max: 125 },
-            speed: { vyMin: 14, vyMax: 18, vxMax: 5.5 },   // old Stage-3 speed — tough but fair
-            gravity: 0.20,                                   // old Stage-3 gravity
-            spawnInterval: { min: 2000, max: 2800 },         // faster cadence is the main pressure
+            speed: { vyMin: 14, vyMax: 18, vxMax: 5.5 },
+            gravity: 0.20,
+            spawnInterval: { min: 2000, max: 2800 },
             spawnCount: { min: 3, max: 5 },
             levelUpBonus: 0.65
         },
@@ -376,7 +378,40 @@ function playStageCompleteSound() {
 }
 
 let _swingSoundCooldown = 0;
-let _gleamTick = 0;   // global gleam phase counter (cycles 0–179)
+let _gleamTick    = 0;   // global gleam phase counter (cycles 0–199)
+let _weaponIdleTick = 0; // continuous tick for idle float animation
+
+// ─── Performance / adaptive-quality system ────────────────────────────────────
+// Rolling FPS measured inside gameLoop. When FPS drops below threshold we
+// switch to "low-perf mode": cheaper background blur, particle caps enforced
+// more aggressively, and alternate-frame landmark processing.
+let _perfLastTs   = 0;
+let _perfRollBuf  = new Float32Array(20); // circular buffer of last 20 frame-times (ms)
+let _perfRollIdx  = 0;
+let _perfRollFull = false;
+let _lowPerfMode  = false;          // true when rolling FPS < 22
+let _onResultsOdd = false;          // toggles each onResults call — used to skip every 2nd
+
+const PERF_FPS_THRESHOLD = 22;      // switch quality when below this FPS
+const PERF_FPS_RECOVER   = 27;      // restore full quality above this FPS
+const MAX_HIT_PARTICLES  = 80;      // hard cap — older GPUs struggle with more
+const MAX_SWING_SPARKLES = 60;
+
+function _perfTrackFrame(now) {
+    if (_perfLastTs > 0) {
+        const dt = now - _perfLastTs;
+        _perfRollBuf[_perfRollIdx] = dt;
+        _perfRollIdx = (_perfRollIdx + 1) % _perfRollBuf.length;
+        if (_perfRollIdx === 0) _perfRollFull = true;
+        const len    = _perfRollFull ? _perfRollBuf.length : _perfRollIdx;
+        let   sum    = 0;
+        for (let i = 0; i < len; i++) sum += _perfRollBuf[i];
+        const fps = 1000 / (sum / len);
+        if (!_lowPerfMode && fps < PERF_FPS_THRESHOLD) _lowPerfMode = true;
+        if ( _lowPerfMode && fps > PERF_FPS_RECOVER)   _lowPerfMode = false;
+    }
+    _perfLastTs = now;
+}
 function playSwingSound(speed) {
     if (_swingSoundCooldown > 0) return;
     _swingSoundCooldown = 10;
@@ -481,6 +516,7 @@ function playWaveClearSound() {
 
 let gameState = {
     isPlaying: false,
+    isPaused: false,
     currentStage: 0,
     totalScore: 0,
     stageScore: 0,
@@ -495,6 +531,9 @@ let gameState = {
     swingSparkles: [],
     powerUps: [],           // ⭐ dropped heart / star collectibles
     lightningArcs: [],      // ⚡ chain-lightning visual arcs
+    hitParticles: [],       // ✨ weapon-specific spark particles on kill
+    leftBladeTipHistory:  [],   // blade-tip hit detection (weapon mode)
+    rightBladeTipHistory: [],
     leftWristHistory: [],
     rightWristHistory: [],
     leftWristSmooth: { x: null, y: null },
@@ -789,19 +828,23 @@ function drawVirtualBackground(results) {
     // Fix: draw mask with large blur (expands detected regions outward, filling
     // gaps at fingers), then draw again at full opacity with source-atop to boost
     // low-alpha pixels. The net effect fills in fingers and softens outer edges.
+    // In low-perf mode we halve the blur radius and skip the second pass to save
+    // ~4 ms per frame on slow machines (acceptable quality trade-off).
+    const expandBlur = _lowPerfMode ? "blur(6px)"  : "blur(12px)";
+    const coreBlur   = _lowPerfMode ? "blur(2px)"  : "blur(3px)";
     maskExpandCtx.clearRect(0, 0, vw, vh);
-    // Pass 1 — expand: large blur pushes the person region outward ~12px,
-    // filling finger gaps and arm-edge gaps caused by low model confidence
-    maskExpandCtx.filter = "blur(12px)";
+    // Pass 1 — expand: large blur pushes the person region outward, filling gaps
+    maskExpandCtx.filter = expandBlur;
     maskExpandCtx.drawImage(mask, 0, 0, vw, vh);
     maskExpandCtx.filter = "none";
-    // Pass 2 — reinforce the high-confidence core at full opacity so the
-    // body centre stays solid; source-atop keeps this within the expanded halo
-    maskExpandCtx.globalCompositeOperation = "source-atop";
-    maskExpandCtx.filter = "blur(3px)";
-    maskExpandCtx.drawImage(mask, 0, 0, vw, vh);
-    maskExpandCtx.filter = "none";
-    maskExpandCtx.globalCompositeOperation = "source-over";
+    if (!_lowPerfMode) {
+        // Pass 2 — reinforce the high-confidence core (skipped in low-perf mode)
+        maskExpandCtx.globalCompositeOperation = "source-atop";
+        maskExpandCtx.filter = coreBlur;
+        maskExpandCtx.drawImage(mask, 0, 0, vw, vh);
+        maskExpandCtx.filter = "none";
+        maskExpandCtx.globalCompositeOperation = "source-over";
+    }
 
     // ── Hand fill: fan-of-strokes + polygon + gradient circles ──────────
     // MediaPipe Pose only provides wrist (15/16) + 4 fingertips (17-22).
@@ -986,13 +1029,47 @@ async function preloadMonsterImages() {
     loadedMonsterImages.push(...imgs);
 }
 
+/**
+ * Remove white/near-white background from a weapon image.
+ * Weapon PNGs are often exported against a white background; this converts
+ * those pixels to transparent so no white rectangle appears in-game.
+ * Uses a soft ramp: pixels where the *darkest* channel >= loThresh fade out
+ * gradually, reaching full transparency at hiThresh.  Coloured pixels
+ * (brown wood, teal stone, etc.) keep at least one dark channel and are
+ * unaffected.
+ */
+function stripWhiteBackground(img, loThresh = 228, hiThresh = 250) {
+    const oc  = document.createElement("canvas");
+    oc.width  = img.naturalWidth;
+    oc.height = img.naturalHeight;
+    const cx  = oc.getContext("2d");
+    cx.drawImage(img, 0, 0);
+    const id  = cx.getImageData(0, 0, oc.width, oc.height);
+    const d   = id.data;
+    for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] === 0) continue;           // already transparent
+        const minC = Math.min(d[i], d[i + 1], d[i + 2]);
+        if (minC >= loThresh) {
+            const t   = Math.min(1, (minC - loThresh) / (hiThresh - loThresh));
+            d[i + 3]  = Math.round(d[i + 3] * (1 - t));
+        }
+    }
+    cx.putImageData(id, 0, 0);
+    return oc;          // returns HTMLCanvasElement (compatible with drawImage)
+}
+
 async function preloadWeaponImages() {
     // Build a parallel task for each slot (null placeholder for noWeapon entries)
     const tasks = WEAPONS.map((w) =>
         w.noWeapon ? Promise.resolve(null) : loadImage(w.path)
     );
     const imgs = await Promise.all(tasks);
-    loadedWeapons.push(...imgs);
+    // Strip white backgrounds before storing — prevents the white-rectangle
+    // artifact that appears when a PNG with a white background is drawImage'd
+    // onto a transparent canvas.
+    imgs.forEach((img, i) => {
+        loadedWeapons[i] = img ? stripWhiteBackground(img) : null;
+    });
 }
 
 async function preloadImages() {
@@ -1794,6 +1871,32 @@ class LightningArc {
     }
 }
 
+// ─── Weapon hit particles ────────────────────────────────────────────────────
+/**
+ * Spawns short-lived spark particles at the hit point.
+ * Knife → small sharp blue sparks; Axe → larger golden embers.
+ */
+function spawnHitParticles(x, y, wcfg) {
+    const color   = wcfg?.color || "#90e0ef";
+    const isAxe   = wcfg?.label === "Axe";
+    const count   = isAxe ? 12 : 10;
+    const baseSpd = isAxe ? 4.5 : 3.5;
+    for (let i = 0; i < count; i++) {
+        const ang   = Math.random() * Math.PI * 2;
+        const spd   = baseSpd + Math.random() * 4;
+        const size  = isAxe ? (2.5 + Math.random() * 3) : (1.5 + Math.random() * 2.5);
+        gameState.hitParticles.push({
+            x, y,
+            vx: Math.cos(ang) * spd,
+            vy: Math.sin(ang) * spd - 1.5,   // slight upward bias
+            life: 1.0,
+            decay: 0.045 + Math.random() * 0.03,
+            size,
+            color
+        });
+    }
+}
+
 // ─── #41 Wave-clear bonus ─────────────────────────────────────────────────────
 function checkWaveClear() {
     // Only trigger when the wave was all-or-nothing (at least 2 monsters) and 0 missed
@@ -1838,6 +1941,16 @@ function showStoryCard(stageIndex, onBegin) {
         storyCardImgEl.classList.add("hidden");
     }
 
+    // Stage 1: show inline how-to-play tips; hide them for all other stages
+    const scTipsEl = document.getElementById("sc-tips");
+    if (scTipsEl) {
+        if (stageIndex === 0) scTipsEl.classList.remove("hidden");
+        else                  scTipsEl.classList.add("hidden");
+    }
+
+    // Stage 1 with tips needs more reading time (6 s); other stages use 3 s
+    const displayMs = stageIndex === 0 ? 6000 : 3000;
+
     // Reset any previous fade-out state
     storyCardOverlay.classList.remove("story-card-overlay--fadeout", "hidden");
 
@@ -1851,32 +1964,30 @@ function showStoryCard(stageIndex, onBegin) {
     }
     const bar = countdownEl.querySelector(".story-card-countdown-bar");
     bar.classList.remove("story-card-countdown-bar--run");
+    // Set transition duration to match displayMs
+    bar.style.transition = `transform ${displayMs / 1000}s linear`;
 
     // Kick off countdown animation on next frame (so CSS transition fires)
     requestAnimationFrame(() => {
         requestAnimationFrame(() => bar.classList.add("story-card-countdown-bar--run"));
     });
 
-    // After 3 s: fade out the overlay, then hide and start game
-    const dismissTimer = setTimeout(() => {
+    const doFadeOut = (cb) => {
         storyCardOverlay.classList.add("story-card-overlay--fadeout");
         setTimeout(() => {
             storyCardOverlay.classList.add("hidden");
             storyCardOverlay.classList.remove("story-card-overlay--fadeout");
-            onBegin();
-        }, 700);   // matches CSS transition duration
-    }, 3000);
+            cb();
+        }, 700);
+    };
 
-    // Safety: clicking anywhere on the overlay still skips the wait
+    const dismissTimer = setTimeout(() => doFadeOut(onBegin), displayMs);
+
+    // Clicking anywhere skips the wait
     const skipOnce = () => {
         clearTimeout(dismissTimer);
         storyCardOverlay.removeEventListener("click", skipOnce);
-        storyCardOverlay.classList.add("story-card-overlay--fadeout");
-        setTimeout(() => {
-            storyCardOverlay.classList.add("hidden");
-            storyCardOverlay.classList.remove("story-card-overlay--fadeout");
-            onBegin();
-        }, 700);
+        doFadeOut(onBegin);
     };
     storyCardOverlay.addEventListener("click", skipOnce);
 }
@@ -2099,7 +2210,98 @@ function showStageOverview(completedCount, onBegin) {
     });
 
     initOvTooltip();
+
+    // ── Change Weapon button ──────────────────────────────────────────────────
+    const changeBtn = document.getElementById("ov-change-weapon-btn");
+    if (changeBtn) {
+        // Remove any previous listener by cloning the button
+        const freshBtn = changeBtn.cloneNode(true);
+        changeBtn.parentNode.replaceChild(freshBtn, changeBtn);
+        freshBtn.addEventListener("click", () => openOvWeaponModal());
+    }
+    initOvWeaponModal();
+
     screen.classList.remove("hidden");
+}
+
+/** Build and initialise the floating weapon-picker modal on the overview screen */
+function initOvWeaponModal() {
+    const modal   = document.getElementById("ov-weapon-modal");
+    const grid    = document.getElementById("ovm-grid");
+    const closeBtn= document.getElementById("ovm-close");
+    const confirmBtn = document.getElementById("ovm-confirm");
+    if (!modal || !grid) return;
+
+    // Clone buttons to purge old listeners
+    const freshClose   = closeBtn  ? closeBtn.cloneNode(true)   : null;
+    const freshConfirm = confirmBtn ? confirmBtn.cloneNode(true) : null;
+    if (freshClose   && closeBtn)   closeBtn.parentNode.replaceChild(freshClose, closeBtn);
+    if (freshConfirm && confirmBtn) confirmBtn.parentNode.replaceChild(freshConfirm, confirmBtn);
+
+    // Rebuild weapon cards
+    grid.innerHTML = "";
+    let pendingIndex = gameState.selectedWeaponIndex;
+    WEAPONS.forEach((w, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "weapon-card" + (i === pendingIndex ? " selected" : "");
+        btn.setAttribute("role", "option");
+        btn.setAttribute("aria-selected", i === pendingIndex ? "true" : "false");
+        btn.dataset.index = String(i);
+        if (w.color) btn.style.setProperty("--wc-accent", w.color);
+        const imgHTML = w.noWeapon
+            ? `<div class="wc-img-wrap wc-img-hands" aria-hidden="true">
+                   <svg viewBox="0 0 80 96" fill="none" xmlns="http://www.w3.org/2000/svg" class="wc-hands-svg">
+                       <path d="M18 52 C16 44 16 36 18 28 C18 24 22 22 26 24 L26 18 C26 14 30 12 33 14 C34 10 38 9 41 12 C42 8 46 8 48 12 L48 26 C52 24 56 26 56 32 L56 54 C56 66 48 76 36 78 C24 78 18 68 18 56 Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+                       <line x1="26" y1="24" x2="26" y2="44" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+                       <line x1="33" y1="14" x2="33" y2="44" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+                       <line x1="41" y1="12" x2="41" y2="44" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+                       <line x1="48" y1="12" x2="48" y2="44" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+                   </svg>
+               </div>`
+            : `<div class="wc-img-wrap" aria-hidden="true"><img src="${w.path}" alt="" class="wc-img" /></div>`;
+        btn.innerHTML = `
+            ${imgHTML}
+            <div class="wc-body">
+                <span class="wc-maori">${w.maoiLabel || ""}</span>
+                <span class="wc-name">${w.label}</span>
+                <span class="wc-desc">${w.desc || ""}</span>
+            </div>
+            <span class="wc-check" aria-hidden="true">✓</span>`;
+        btn.addEventListener("click", () => {
+            pendingIndex = i;
+            grid.querySelectorAll(".weapon-card").forEach((b, j) => {
+                const sel = j === i;
+                b.classList.toggle("selected", sel);
+                b.setAttribute("aria-selected", sel ? "true" : "false");
+            });
+        });
+        grid.appendChild(btn);
+    });
+
+    // Confirm: apply selection and close
+    const newConfirm = document.getElementById("ovm-confirm");
+    if (newConfirm) {
+        newConfirm.addEventListener("click", () => {
+            gameState.selectedWeaponIndex = pendingIndex;
+            closeOvWeaponModal();
+        });
+    }
+    // Close / backdrop
+    const newClose = document.getElementById("ovm-close");
+    if (newClose) newClose.addEventListener("click", closeOvWeaponModal);
+    const backdrop = modal.querySelector(".ovm-backdrop");
+    if (backdrop) backdrop.addEventListener("click", closeOvWeaponModal);
+}
+
+function openOvWeaponModal() {
+    const modal = document.getElementById("ov-weapon-modal");
+    if (modal) modal.classList.remove("hidden");
+}
+
+function closeOvWeaponModal() {
+    const modal = document.getElementById("ov-weapon-modal");
+    if (modal) modal.classList.add("hidden");
 }
 
 function hideStageOverview() {
@@ -2152,35 +2354,168 @@ function showComboBreak(combo) {
     setTimeout(() => el.remove(), 1000);
 }
 
-// ─── Ambient ocean music ──────────────────────────────────────────────────────
+// ─── Ambient ocean music + Māori drums ────────────────────────────────────────
 let _ambienceNodes = [];
-function startAmbience() {
+let _drumScheduler  = null;
+let _drumNextTime   = 0;
+let _drumStep       = 0;
+
+/**
+ * startAmbience(stageIndex)
+ * Three-layer ocean ambience (deep rumble / mid surf / high spray), each with
+ * a slow LFO swell, plus a rhythmic Māori-style kick-drum pattern that grows
+ * more intense each stage.
+ */
+function startAmbience(stageIndex = 0) {
     stopAmbience();
-    const ctx2 = audioCtx();
-    const bufLen = ctx2.sampleRate * 3;
-    const buf = ctx2.createBuffer(1, bufLen, ctx2.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+    const ctx2   = audioCtx();
+    const stage  = Math.min(stageIndex, 3);
+    const allNodes = [];
 
-    const src = ctx2.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
+    // Per-stage intensity and drum tempo
+    const intensityScale = [0.55, 0.70, 0.85, 1.0][stage];
+    const drumBPM        = [68,   84,  102,  118][stage];
 
-    const lpf = ctx2.createBiquadFilter();
-    lpf.type = "lowpass";
-    lpf.frequency.value = 320;
-    lpf.Q.value = 0.8;
+    // Master output (fades in over 2.5 s so first beat isn't jarring)
+    const master = ctx2.createGain();
+    master.gain.setValueAtTime(0, ctx2.currentTime);
+    master.gain.linearRampToValueAtTime(intensityScale, ctx2.currentTime + 2.5);
+    master.connect(ctx2.destination);
+    allNodes.push(master);
 
-    const gain = ctx2.createGain();
-    gain.gain.value = 0.06;
+    // ── Ocean layers ───────────────────────────────────────────────────────────
+    function makeOceanLayer(lpFreq, hpFreq, baseGain, lfoFreq, lfoDepth) {
+        const bufLen = ctx2.sampleRate * 5;
+        const buf    = ctx2.createBuffer(1, bufLen, ctx2.sampleRate);
+        const d      = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) d[i] = Math.random() * 2 - 1;
 
-    src.connect(lpf);
-    lpf.connect(gain);
-    gain.connect(ctx2.destination);
-    src.start();
-    _ambienceNodes = [src, lpf, gain];
+        const src = ctx2.createBufferSource();
+        src.buffer = buf;
+        src.loop = true;
+        src.loopStart = Math.random() * 2; // stagger phase so layers don't align
+
+        const lpf = ctx2.createBiquadFilter();
+        lpf.type = "lowpass";
+        lpf.frequency.value = lpFreq;
+
+        const hpf = ctx2.createBiquadFilter();
+        hpf.type = "highpass";
+        hpf.frequency.value = hpFreq;
+
+        const layerGain = ctx2.createGain();
+        layerGain.gain.value = baseGain;
+
+        // LFO: slow swell to simulate wave motion
+        const lfo  = ctx2.createOscillator();
+        lfo.type   = "sine";
+        lfo.frequency.value = lfoFreq;
+        const lfoG = ctx2.createGain();
+        lfoG.gain.value = lfoDepth * baseGain;
+
+        src.connect(hpf);
+        hpf.connect(lpf);
+        lpf.connect(layerGain);
+        lfo.connect(lfoG);
+        lfoG.connect(layerGain.gain);
+        layerGain.connect(master);
+
+        src.start();
+        lfo.start();
+        allNodes.push(src, hpf, lpf, lfo, lfoG, layerGain);
+    }
+
+    // Layer 1 — deep ocean rumble (20–160 Hz), ~14-second swell
+    makeOceanLayer(160,  20,   0.10,  0.072, 0.50);
+    // Layer 2 — mid surf wash (180–900 Hz), ~7-second swell
+    makeOceanLayer(900,  180,  0.055, 0.15,  0.45);
+    // Layer 3 — high spray / hiss (1 800–5 000 Hz), fast flutter
+    makeOceanLayer(5000, 1800, 0.025, 0.38,  0.40);
+
+    // ── Māori drum scheduler ───────────────────────────────────────────────────
+    const eighthDur = (60 / drumBPM) / 2;  // one 8th-note in seconds
+    const LOOKAHEAD = 0.15;                  // schedule this many s ahead
+    const TICK_MS   = 80;                    // poll every 80 ms
+
+    // 8th-note kick patterns (1 = strike, 0 = rest), 8 steps = 1 bar
+    const kickPatterns = [
+        [1,0, 0,0, 1,0, 0,0],   // Stage 1 — slow quarter notes
+        [1,0, 0,0, 1,0, 1,0],   // Stage 2 — + pick-up on beat 3.5
+        [1,0, 1,0, 1,0, 0,1],   // Stage 3 — driving syncopation
+        [1,0, 1,1, 1,0, 1,0],   // Stage 4 — intense warrior rhythm
+    ];
+    // Rim/wood-block accent on off-beats (stages 2–4)
+    const rimPatterns = [
+        [0,0, 0,0, 0,0, 0,0],
+        [0,0, 0,0, 1,0, 0,0],
+        [0,1, 0,0, 0,1, 0,0],
+        [0,1, 0,1, 0,1, 0,1],
+    ];
+    const kickPat = kickPatterns[stage];
+    const rimPat  = rimPatterns[stage];
+
+    function scheduleKick(t) {
+        // Low sine: punch + pitch drop (pahu drum body)
+        const osc = ctx2.createOscillator();
+        const og  = ctx2.createGain();
+        osc.connect(og); og.connect(master);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(190 + stage * 18, t);
+        osc.frequency.exponentialRampToValueAtTime(38, t + 0.16);
+        og.gain.setValueAtTime(0.52 * intensityScale, t);
+        og.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+        osc.start(t); osc.stop(t + 0.24);
+
+        // Noise burst: skin-impact transient
+        const nLen = Math.ceil(ctx2.sampleRate * 0.04);
+        const nBuf = ctx2.createBuffer(1, nLen, ctx2.sampleRate);
+        const nd   = nBuf.getChannelData(0);
+        for (let i = 0; i < nLen; i++) nd[i] = (Math.random() * 2 - 1) * (1 - i / nLen);
+        const ns  = ctx2.createBufferSource(); ns.buffer = nBuf;
+        const nbf = ctx2.createBiquadFilter();
+        nbf.type = "bandpass"; nbf.frequency.value = 250; nbf.Q.value = 0.9;
+        const ng  = ctx2.createGain();
+        ns.connect(nbf); nbf.connect(ng); ng.connect(master);
+        ng.gain.setValueAtTime(0.30 * intensityScale, t);
+        ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+        ns.start(t); ns.stop(t + 0.05);
+    }
+
+    function scheduleRim(t) {
+        // Short triangle click: wood block / rim accent
+        const osc = ctx2.createOscillator();
+        const og  = ctx2.createGain();
+        osc.connect(og); og.connect(master);
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(700, t);
+        osc.frequency.exponentialRampToValueAtTime(340, t + 0.04);
+        og.gain.setValueAtTime(0.18 * intensityScale, t);
+        og.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+        osc.start(t); osc.stop(t + 0.055);
+    }
+
+    _drumStep     = 0;
+    _drumNextTime = ctx2.currentTime + 0.6; // brief lead-in before first beat
+
+    function tickDrums() {
+        if (!_drumScheduler) return;
+        const now = audioCtx().currentTime;
+        while (_drumNextTime < now + LOOKAHEAD) {
+            const step = _drumStep % kickPat.length;
+            if (kickPat[step]) scheduleKick(_drumNextTime);
+            if (rimPat[step])  scheduleRim(_drumNextTime);
+            _drumNextTime += eighthDur;
+            _drumStep++;
+        }
+        _drumScheduler = setTimeout(tickDrums, TICK_MS);
+    }
+    _drumScheduler = setTimeout(tickDrums, TICK_MS);
+
+    _ambienceNodes = allNodes;
 }
+
 function stopAmbience() {
+    if (_drumScheduler) { clearTimeout(_drumScheduler); _drumScheduler = null; }
     _ambienceNodes.forEach(n => { try { n.disconnect(); if (n.stop) n.stop(); } catch (_) {} });
     _ambienceNodes = [];
 }
@@ -2200,9 +2535,11 @@ function hideInstructionBar() { instructionBarEl && instructionBarEl.classList.a
 // ─── ESC to return to start ───────────────────────────────────────────────────
 function returnToStart() {
     gameState.isPlaying = false;
+    gameState.isPaused  = false;
     cancelSpawnTimer();
     stopAmbience();
     hideCameraBadge();
+    hidePauseBtn();
     hideInstructionBar();
     hideEmptyState();
     [stageCompleteScreen, gameCompleteScreen, gameOverScreen,
@@ -2211,8 +2548,99 @@ function returnToStart() {
     startScreen.classList.remove("hidden");
 }
 window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && gameState.isPlaying) returnToStart();
+    if (e.key === "Escape" && gameState.isPlaying) {
+        if (gameState.isPaused) resumeGame();
+        else pauseGame();
+    }
 });
+
+// ─── Pause system ─────────────────────────────────────────────────────────────
+const pauseOverlayEl    = document.getElementById("pause-overlay");
+const pauseResumeBtnEl  = document.getElementById("pause-resume-btn");
+const pauseExitBtnEl    = document.getElementById("pause-exit-btn");
+const pauseBtnEl        = document.getElementById("pause-btn");
+
+function showPauseBtn()  { pauseBtnEl  && pauseBtnEl.classList.remove("hidden"); }
+function hidePauseBtn()  { pauseBtnEl  && pauseBtnEl.classList.add("hidden"); }
+
+function pauseGame() {
+    if (!gameState.isPlaying || gameState.isPaused) return;
+    gameState.isPaused = true;
+    cancelSpawnTimer();
+    // Suspend AudioContext so all sound (ambience + drums) pauses cleanly
+    if (_audioCtx) _audioCtx.suspend();
+    pauseOverlayEl && pauseOverlayEl.classList.remove("hidden");
+}
+
+function resumeGame() {
+    if (!gameState.isPaused) return;
+    gameState.isPaused = false;
+    pauseOverlayEl && pauseOverlayEl.classList.add("hidden");
+    if (_audioCtx) _audioCtx.resume();
+    // Re-trigger spawn cycle (it was cancelled on pause)
+    spawnMonster();
+}
+
+// Wire up pause overlay buttons
+if (pauseResumeBtnEl) pauseResumeBtnEl.addEventListener("click", resumeGame);
+if (pauseExitBtnEl)   pauseExitBtnEl.addEventListener("click", () => {
+    gameState.isPaused = false;
+    pauseOverlayEl && pauseOverlayEl.classList.add("hidden");
+    returnToStart();
+});
+// Wire up the in-game pause button
+if (pauseBtnEl) pauseBtnEl.addEventListener("click", () => {
+    if (gameState.isPaused) resumeGame(); else pauseGame();
+});
+
+// ─── Tutorial overlay ─────────────────────────────────────────────────────────
+const tutorialOverlayEl = document.getElementById("tutorial-overlay");
+const tutGoBtnEl        = document.getElementById("tut-go-btn");
+const tutCountdownBarEl = document.getElementById("tut-countdown-bar");
+
+const TUT_DURATION_MS = 9000; // auto-dismiss after 9 s
+
+/**
+ * showTutorial(callback)
+ * Displays the tutorial overlay, then calls callback() when dismissed
+ * (either by button or by auto-countdown).  Only shown on Stage 1.
+ */
+function showTutorial(callback) {
+    if (!tutorialOverlayEl) { callback(); return; }
+
+    tutorialOverlayEl.classList.remove("hidden");
+
+    // Animate countdown bar shrinking from 100% → 0% over TUT_DURATION_MS
+    if (tutCountdownBarEl) {
+        tutCountdownBarEl.style.transition = "none";
+        tutCountdownBarEl.style.transform  = "scaleX(1)";
+        // Force reflow so the reset is applied before transition starts
+        tutCountdownBarEl.getBoundingClientRect();
+        tutCountdownBarEl.style.transition = `transform ${TUT_DURATION_MS}ms linear`;
+        tutCountdownBarEl.style.transform  = "scaleX(0)";
+    }
+
+    let dismissed = false;
+    const dismiss = () => {
+        if (dismissed) return;
+        dismissed = true;
+        clearTimeout(autoTimer);
+        tutorialOverlayEl.classList.add("hidden");
+        if (tutCountdownBarEl) {
+            tutCountdownBarEl.style.transition = "none";
+            tutCountdownBarEl.style.transform  = "scaleX(1)";
+        }
+        callback();
+    };
+
+    const autoTimer = setTimeout(dismiss, TUT_DURATION_MS);
+
+    // Button click dismisses immediately
+    if (tutGoBtnEl) {
+        const handler = () => { tutGoBtnEl.removeEventListener("click", handler); dismiss(); };
+        tutGoBtnEl.addEventListener("click", handler);
+    }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 function updateUI() {
@@ -2364,6 +2792,7 @@ function hideGripHintBar() {
 function showStageComplete() {
     hideGripHintBar();
     hideCameraBadge();
+    hidePauseBtn();
     hideInstructionBar();
     hideEmptyState();
     playStageCompleteSound();
@@ -2436,15 +2865,160 @@ function showNameSetup(onDone) {
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") confirm(); }, { once: true });
 }
 
+// ─── Fireworks ceremony ───────────────────────────────────────────────────────
+const fwCanvas  = document.getElementById("fireworks-canvas");
+const fwCtx     = fwCanvas ? fwCanvas.getContext("2d") : null;
+let   _fwRaf    = null;
+let   _fwShells = [];
+
+const FW_COLORS = [
+    "#ffd166", "#06d6a0", "#48cae4", "#ef476f",
+    "#fb8500", "#a8dadc", "#e9c46a", "#90e0ef"
+];
+
+function _fwResize() {
+    if (!fwCanvas) return;
+    fwCanvas.width  = window.innerWidth;
+    fwCanvas.height = window.innerHeight;
+}
+
+/** One firework shell: explodes at (x, y) with `color` into `count` sparks. */
+function _fwBurst(x, y, color, count = 55) {
+    const sparks = [];
+    for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+        const spd   = 3.5 + Math.random() * 5.5;
+        sparks.push({
+            x, y,
+            vx:   Math.cos(angle) * spd,
+            vy:   Math.sin(angle) * spd - 1.5,
+            life: 1.0,
+            decay: 0.016 + Math.random() * 0.012,
+            size:  2 + Math.random() * 2,
+            trail: [],
+        });
+    }
+    _fwShells.push({ sparks, color });
+}
+
+function _fwLaunchWave(w, h) {
+    const count = 5 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+            const x = w * (0.15 + Math.random() * 0.70);
+            const y = h * (0.10 + Math.random() * 0.50);
+            _fwBurst(x, y, FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)]);
+        }, i * 140);
+    }
+}
+
+function _fwTick() {
+    if (!fwCtx || !fwCanvas) return;
+    const w = fwCanvas.width, h = fwCanvas.height;
+
+    // Fade trail instead of clear for comet effect
+    fwCtx.fillStyle = "rgba(2, 10, 22, 0.18)";
+    fwCtx.fillRect(0, 0, w, h);
+
+    for (const shell of _fwShells) {
+        fwCtx.save();
+        fwCtx.globalCompositeOperation = "lighter";
+        for (const s of shell.sparks) {
+            if (s.life <= 0) continue;
+            // Trail: last 3 positions
+            s.trail.push({ x: s.x, y: s.y });
+            if (s.trail.length > 4) s.trail.shift();
+
+            // Draw trail line
+            if (s.trail.length >= 2) {
+                fwCtx.beginPath();
+                fwCtx.strokeStyle = shell.color;
+                fwCtx.globalAlpha = s.life * 0.35;
+                fwCtx.lineWidth   = s.size * 0.6;
+                fwCtx.moveTo(s.trail[0].x, s.trail[0].y);
+                for (let t = 1; t < s.trail.length; t++) {
+                    fwCtx.lineTo(s.trail[t].x, s.trail[t].y);
+                }
+                fwCtx.stroke();
+            }
+
+            // Spark head
+            fwCtx.beginPath();
+            fwCtx.globalAlpha = s.life;
+            fwCtx.fillStyle   = shell.color;
+            fwCtx.arc(s.x, s.y, s.size * s.life, 0, Math.PI * 2);
+            fwCtx.fill();
+
+            // Physics
+            s.x    += s.vx;
+            s.y    += s.vy;
+            s.vy   += 0.12;     // gravity
+            s.vx   *= 0.97;     // air drag
+            s.life -= s.decay;
+        }
+        fwCtx.restore();
+    }
+
+    // Remove dead shells
+    _fwShells = _fwShells.filter(sh => sh.sparks.some(s => s.life > 0));
+    _fwRaf = requestAnimationFrame(_fwTick);
+}
+
+function startFireworks(durationMs = 5500) {
+    if (!fwCanvas || !fwCtx) return;
+    _fwResize();
+    fwCanvas.classList.remove("hidden");
+    _fwShells = [];
+
+    const w = fwCanvas.width, h = fwCanvas.height;
+
+    // 3 waves of bursts, 900 ms apart (fits inside the 3 s window)
+    const waveCount = 3;
+    for (let wave = 0; wave < waveCount; wave++) {
+        setTimeout(() => _fwLaunchWave(w, h), wave * 900);
+    }
+
+    _fwRaf = requestAnimationFrame(_fwTick);
+
+    // Auto-stop after duration
+    setTimeout(stopFireworks, durationMs);
+}
+
+function stopFireworks() {
+    if (_fwRaf) { cancelAnimationFrame(_fwRaf); _fwRaf = null; }
+    _fwShells = [];
+    if (fwCanvas) fwCanvas.classList.add("hidden");
+    if (fwCtx && fwCanvas) fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+}
+
+/** Fanfare: more elaborate than playStageCompleteSound */
+function playVictoryFanfare() {
+    const ctx2  = audioCtx();
+    const now   = ctx2.currentTime;
+    // Rising arpegio + chord swell
+    const melody = [523, 659, 784, 1047, 1319, 1047, 1319, 1568];
+    melody.forEach((freq, i) =>
+        playTone(freq, "sine", 0.45, i < 5 ? 0.22 : 0.30, now + i * 0.10)
+    );
+    // Low bass note under it
+    playTone(131, "triangle", 1.2, 0.18, now + 0.5);
+    // Shimmer: high triangle chord
+    [2093, 2637].forEach((f, i) =>
+        playTone(f, "triangle", 0.6, 0.10, now + 0.6 + i * 0.08)
+    );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 function showGameComplete() {
     hideGripHintBar();
     hideCameraBadge();
+    hidePauseBtn();
     hideInstructionBar();
     hideEmptyState();
     stopAmbience();
-    playStageCompleteSound();
+    playVictoryFanfare();
+    startFireworks(3000);
 
     // Record score; get fresh data
     const data       = recordGameScore(gameState.totalScore);
@@ -2493,9 +3067,11 @@ function showGameComplete() {
 
 function endGame() {
     gameState.isPlaying = false;
+    gameState.isPaused  = false;
     cancelSpawnTimer();
     hideGripHintBar();
     hideCameraBadge();
+    hidePauseBtn();
     hideInstructionBar();
     hideEmptyState();
     stopAmbience();
@@ -2580,6 +3156,8 @@ function tryHitMonsterAt(px, py, hitIds) {
             gameState.stageScore += points;
 
             gameState.killBursts.push(new KillBurst(monster.x, monster.y));
+            // ③ Weapon-specific hit particles at the monster's position
+            spawnHitParticles(monster.x, monster.y, WEAPONS[gameState.selectedWeaponIndex]);
             const scoreLabel = earlyStrike ? `+${points} ⚡` : `+${points}`;
             gameState.floatTexts.push(new FloatScore(monster.x, monster.y - 42, scoreLabel));
 
@@ -2670,6 +3248,47 @@ function sampleHitsAlongCubic(b0, b1, b2, b3) {
         const t = i / steps;
         const pt = cubicBezierPoint(b0, b1, b2, b3, t);
         tryHitMonsterAt(pt.x, pt.y, hitIds);
+    }
+}
+
+/**
+ * Blade-tip hit detection (weapon mode only).
+ * Computes the world position of the blade tip from the current weapon pose,
+ * then samples hits along the path from the previous tip position.
+ * Runs independently of palm-hit detection so the blade tip can register
+ * kills even when the hand itself doesn't intersect the monster.
+ *
+ * @param {object|null} pose  - current weaponPoseSmooth entry (left or right)
+ * @param {Array}  tipHistory - persistent array of recent tip positions (shared across frames)
+ */
+function processBladeTipHits(pose, tipHistory) {
+    const wcfg = WEAPONS[gameState.selectedWeaponIndex];
+    if (!pose || !wcfg || wcfg.noWeapon) { tipHistory.length = 0; return; }
+
+    const img = loadedWeapons[gameState.selectedWeaponIndex];
+    if (!img) return;
+
+    // Blade length in world pixels: anchorY × displayed height
+    const bw  = weaponDisplayWidthPx(pose.armLen || 200) * wcfg.scale;
+    const bh  = ((img.naturalHeight || img.height) / (img.naturalWidth || img.width)) * bw;
+    const ay  = wcfg.anchorY * bh;
+
+    // Blade direction: totalAngle (forearm angle + weapon offset, ignoring small tilt)
+    const totalAngle = pose.angle + wcfg.angleOffset;
+    const tipX = pose.wx + ay * Math.sin(totalAngle);
+    const tipY = pose.wy - ay * Math.cos(totalAngle);
+
+    tipHistory.push({ x: tipX, y: tipY });
+    if (tipHistory.length > 3) tipHistory.shift();
+
+    if (tipHistory.length >= 2) {
+        const prev = tipHistory[tipHistory.length - 2];
+        const curr = tipHistory[tipHistory.length - 1];
+        const dist = Math.hypot(curr.x - prev.x, curr.y - prev.y);
+        // Only register hits on meaningful movement (half MIN_SLASH_LEN)
+        if (dist >= MIN_SLASH_LEN * 0.5) {
+            sampleHitsAlongLine(prev.x, prev.y, curr.x, curr.y);
+        }
     }
 }
 
@@ -2897,13 +3516,21 @@ function drawHeldWeapons(ctx2) {
     const wcfg = WEAPONS[gameState.selectedWeaponIndex];
     if (!wcfg || wcfg.noWeapon) return;
     const img = loadedWeapons[gameState.selectedWeaponIndex];
-    if (!img || !img.complete || !img.naturalWidth) return;
+    // loadedWeapons now stores HTMLCanvasElement (after white-background strip),
+    // so check .width/.height instead of .complete/.naturalWidth
+    if (!img || !img.width || !img.height) return;
+    // Provide naturalWidth/Height aliases so the rest of the function still works
+    if (img.naturalWidth === undefined) img.naturalWidth = img.width;
+    if (img.naturalHeight === undefined) img.naturalHeight = img.height;
 
-    _gleamTick = (_gleamTick + 1) % 200;
+    _gleamTick     = (_gleamTick + 1) % 200;
+    _weaponIdleTick++;
+
+    const weaponColor = wcfg.color || "#90e0ef";
 
     const drawOne = (pose, flip) => {
         if (!pose) return;
-        const { wx, wy, angle, armLen, vx, vy } = pose;
+        const { wx: rawWx, wy: rawWy, angle, armLen, vx, vy } = pose;
         const sp = Math.hypot(vx || 0, vy || 0);
 
         let bw = weaponDisplayWidthPx(armLen || 200) * wcfg.scale;
@@ -2915,49 +3542,107 @@ function drawHeldWeapons(ctx2) {
         const ax = wcfg.anchorX * bw;
         const ay = wcfg.anchorY * bh;
 
-        // ── 1. Motion-blur ghost trail ────────────────────────────────
-        const trail = pose.trail || [];
-        trail.forEach((t, i) => {
-            const a = 0.16 - i * 0.038;
-            if (a <= 0) return;
-            const sc = 1 - i * 0.025;
-            ctx2.save();
-            ctx2.globalAlpha = a;
-            ctx2.translate(t.wx, t.wy);
-            ctx2.rotate(t.angle + wcfg.angleOffset + tilt);
-            if (flip) ctx2.scale(-1, 1);
-            ctx2.drawImage(img, -ax * sc, -ay * sc, bw * sc, bh * sc);
-            ctx2.restore();
-        });
+        // ── #1 Idle float ─────────────────────────────────────────────
+        const idleAmp  = Math.max(0, 1 - sp / 18) * 2.4;
+        const floatOff = Math.sin(_weaponIdleTick * 0.048) * idleAmp;
+        const wx = rawWx + Math.cos(totalAngle + Math.PI / 2) * floatOff;
+        const wy = rawWy + Math.sin(totalAngle + Math.PI / 2) * floatOff;
 
-        // ── 2. Main weapon (slight speed-scale boost) ─────────────────
+        // ── ④ Rotation inertia: displayAngle lags behind totalAngle ───
+        // Gives the weapon "physical weight" — direction changes arrive
+        // slightly late, as if the blade is resisting the change.
+        if (pose.displayAngle === undefined) {
+            pose.displayAngle = totalAngle;
+        } else {
+            const diff = unwrapAngleDiff(totalAngle, pose.displayAngle);
+            pose.displayAngle += diff * 0.22;   // 22% catchup per rAF frame
+        }
+        const renderAngle = pose.displayAngle;
+
+        // ── ① Blade-tip trail ─────────────────────────────────────────
+        // Connects the BLADE TIP positions across the last few frames so
+        // the trail arc reflects the actual cutting edge, not the wrist.
+        // Tip world coords: (wx + ay*sin(weaponAngle), wy − ay*cos(weaponAngle))
+        const trail = pose.trail || [];
+        const bladeTip = (tp) => ({
+            x: tp.wx + ay * Math.sin(tp.angle + wcfg.angleOffset),
+            y: tp.wy - ay * Math.cos(tp.angle + wcfg.angleOffset)
+        });
+        if (trail.length >= 2) {
+            const curTip = { x: wx + ay * Math.sin(renderAngle), y: wy - ay * Math.cos(renderAngle) };
+            const pts    = [curTip, ...trail.map(bladeTip)];
+            ctx2.save();
+            ctx2.globalCompositeOperation = "lighter";
+            ctx2.lineCap  = "round";
+            ctx2.lineJoin = "round";
+            for (let ti = 0; ti < pts.length - 1; ti++) {
+                const alpha = 0.32 - ti * 0.07;
+                if (alpha <= 0) break;
+                const p0 = pts[ti], p1 = pts[ti + 1];
+                const lw = Math.max(2, (12 - ti * 2.5) * (bw / 220));
+                ctx2.beginPath();
+                ctx2.strokeStyle = weaponColor;
+                ctx2.lineWidth   = lw;
+                ctx2.globalAlpha = alpha;
+                ctx2.moveTo(p0.x, p0.y);
+                ctx2.lineTo(p1.x, p1.y);
+                ctx2.stroke();
+            }
+            ctx2.restore();
+        }
+
+        // ── Speed-scale ────────────────────────────────────────────────
         const speedBoost = 1 + Math.min(sp / 260, 0.10);
         const dbw = bw * speedBoost, dbh = bh * speedBoost;
         const dax = ax * speedBoost, day = ay * speedBoost;
 
         ctx2.save();
         ctx2.translate(wx, wy);
-        ctx2.rotate(totalAngle);
+        ctx2.rotate(renderAngle);          // ← use inertia angle for rendering
         if (flip) ctx2.scale(-1, 1);
 
-        ctx2.shadowColor = "rgba(0,0,0,0.55)";
-        ctx2.shadowBlur = 14;
-        ctx2.shadowOffsetX = 3;
-        ctx2.shadowOffsetY = 5;
-        ctx2.drawImage(img, -dax, -day, dbw, dbh);
-        ctx2.shadowColor = "transparent";
-        ctx2.shadowBlur = 0;
-        ctx2.shadowOffsetX = 0;
-        ctx2.shadowOffsetY = 0;
+        // ── ② Speed-responsive energy halo ────────────────────────────
+        // Halo grows and brightens with movement speed, giving visual
+        // feedback proportional to how hard the player is swinging.
+        const speedFactor  = Math.min(sp / 75, 1.0);
+        const haloAlpha    = 0.06 + speedFactor * 0.13;   // 0.06 still → 0.19 fast
+        const haloRadMult  = 0.75 + speedFactor * 0.55;   // 0.75x still → 1.30x fast
+        ctx2.save();
+        ctx2.globalCompositeOperation = "lighter";
+        ctx2.fillStyle   = weaponColor;
+        ctx2.globalAlpha = haloAlpha;
+        ctx2.beginPath();
+        ctx2.ellipse(-dax + dbw * 0.52, -day + dbh * 0.42,
+                     dbw * 0.44 * haloRadMult, dbh * 0.13 * haloRadMult,
+                     0, 0, Math.PI * 2);
+        ctx2.fill();
+        ctx2.globalAlpha = haloAlpha * 0.6;
+        ctx2.beginPath();
+        ctx2.ellipse(-dax + dbw * 0.52, -day + dbh * 0.42,
+                     dbw * 0.28 * haloRadMult, dbh * 0.08 * haloRadMult,
+                     0, 0, Math.PI * 2);
+        ctx2.fill();
+        ctx2.restore();
 
-        // ── 3. Periodic blade gleam (diagonal light sweep) ────────────
-        const gPhase = _gleamTick / 200;   // 0..1
+        // Main weapon image — NO shadowBlur on drawImage: canvas shadows use the
+        // bounding box (not PNG alpha) and produce a visible white rectangle.
+        // Depth is handled by the energy halo and trail instead.
+        ctx2.drawImage(img, -dax, -day, dbw, dbh);
+
+        // ── Periodic blade gleam ───────────────────────────────────────
+        // IMPORTANT: gradient must be purely horizontal (same y at start and end).
+        // A diagonal gradient causes ALL four corners of the fillRect to fall
+        // inside non-zero alpha regions, lighting up the whole bounding box as
+        // a visible white rectangle. Horizontal gradient: alpha=0 outside the
+        // sweep band, so only a vertical stripe is brightened.
+        const gPhase = _gleamTick / 200;
         if (gPhase < 0.22) {
-            const gp  = gPhase / 0.22;    // 0..1 within gleam window
-            const gAlpha = Math.sin(gp * Math.PI) * 0.45;
+            const gp     = gPhase / 0.22;
+            const gAlpha = Math.sin(gp * Math.PI) * 0.38;
             const sweepX = -dax + dbw * gp;
-            const halfW  = dbw * 0.28;
-            const grad = ctx2.createLinearGradient(sweepX - halfW, -day, sweepX + halfW, -day + dbh * 0.6);
+            const halfW  = dbw * 0.22;
+            // Horizontal-only gradient: y is identical at both endpoints
+            const grad   = ctx2.createLinearGradient(sweepX - halfW, 0, sweepX + halfW, 0);
             grad.addColorStop(0,   `rgba(255,255,255,0)`);
             grad.addColorStop(0.5, `rgba(255,255,255,${gAlpha})`);
             grad.addColorStop(1,   `rgba(255,255,255,0)`);
@@ -2967,14 +3652,26 @@ function drawHeldWeapons(ctx2) {
             ctx2.globalCompositeOperation = "source-over";
         }
 
-        // ── 4. Hit flash: bright white overlay on kill ────────────────
+        // ── #2 Hit flash + expanding burst ring ────────────────────────
         if (gameState.weaponHitFlash > 0) {
-            const flashA = (gameState.weaponHitFlash / 9) * 0.72;
+            const t2 = gameState.weaponHitFlash / 9;  // 1→0
             ctx2.globalCompositeOperation = "lighter";
-            ctx2.globalAlpha = flashA;
+            ctx2.globalAlpha = t2 * 0.72;
             ctx2.drawImage(img, -dax, -day, dbw, dbh);
             ctx2.globalCompositeOperation = "source-over";
             ctx2.globalAlpha = 1;
+            // Expanding color ring
+            const ringR = (1 - t2) * dbw * 0.95;
+            ctx2.save();
+            ctx2.globalAlpha  = t2 * 0.75;
+            ctx2.strokeStyle  = weaponColor;
+            ctx2.lineWidth    = 3 + 5 * t2;
+            ctx2.shadowColor  = weaponColor;
+            ctx2.shadowBlur   = 18;
+            ctx2.beginPath();
+            ctx2.arc(-dax + dbw * 0.45, -day + dbh * 0.38, ringR, 0, Math.PI * 2);
+            ctx2.stroke();
+            ctx2.restore();
         }
 
         ctx2.restore();
@@ -3018,6 +3715,11 @@ function onResults(results) {
 
     drawVirtualBackground(results);
 
+    // In low-perf mode skip landmark processing on every other frame —
+    // background + video composite still runs so the feed doesn't freeze.
+    _onResultsOdd = !_onResultsOdd;
+    if (_lowPerfMode && _onResultsOdd) return;
+
     if (results.poseLandmarks && gameState.isPlaying) {
         const wcfg = WEAPONS[gameState.selectedWeaponIndex];
         if (wcfg && !wcfg.noWeapon) {
@@ -3055,23 +3757,42 @@ function onResults(results) {
     if (landmarkVisible(leftWrist) && landmarkVisible(leftElbow)) {
         const { x: lx, y: ly } = palmCenter(leftElbow, leftWrist);
         processWristSlash(gameState.leftWristHistory, lx, ly, 195, gameState.leftWristSmooth, gameState.leftTrail);
+        processBladeTipHits(gameState.weaponPoseSmooth.left,  gameState.leftBladeTipHistory);
     } else {
         gameState.leftWristHistory = [];
         gameState.leftWristSmooth = { x: null, y: null };
+        gameState.leftBladeTipHistory = [];
         // trail fades naturally via tick()
     }
 
     if (landmarkVisible(rightWrist) && landmarkVisible(rightElbow)) {
         const { x: rx, y: ry } = palmCenter(rightElbow, rightWrist);
         processWristSlash(gameState.rightWristHistory, rx, ry, 28, gameState.rightWristSmooth, gameState.rightTrail);
+        processBladeTipHits(gameState.weaponPoseSmooth.right, gameState.rightBladeTipHistory);
     } else {
         gameState.rightWristHistory = [];
         gameState.rightWristSmooth = { x: null, y: null };
+        gameState.rightBladeTipHistory = [];
     }
 }
 
-function gameLoop() {
+function gameLoop(now) {
     if (!gameState.isPlaying) return;
+    // Keep rAF chain alive while paused, but skip all updates/draws
+    if (gameState.isPaused) {
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+
+    _perfTrackFrame(now);
+
+    // ── Hard caps: trim particle arrays to avoid GPU overload ─────────────
+    if (gameState.hitParticles.length > MAX_HIT_PARTICLES) {
+        gameState.hitParticles.splice(0, gameState.hitParticles.length - MAX_HIT_PARTICLES);
+    }
+    if (gameState.swingSparkles.length > MAX_SWING_SPARKLES) {
+        gameState.swingSparkles.splice(0, gameState.swingSparkles.length - MAX_SWING_SPARKLES);
+    }
 
     ctx.clearRect(0, 0, gameW, gameH);
 
@@ -3144,6 +3865,28 @@ function gameLoop() {
         return alive;
     });
 
+    // ── ③ Weapon hit particles ─────────────────────────────────────────────
+    gameState.hitParticles = gameState.hitParticles.filter((p) => {
+        p.x  += p.vx;
+        p.y  += p.vy;
+        p.vy += 0.28;   // gravity
+        p.vx *= 0.95;   // air drag
+        p.life -= p.decay;
+        return p.life > 0;
+    });
+    if (gameState.hitParticles.length > 0) {
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        for (const p of gameState.hitParticles) {
+            ctx.globalAlpha = p.life * 0.9;
+            ctx.fillStyle   = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * Math.max(0.2, p.life), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
     gameState.swingSparkles = gameState.swingSparkles.filter((s) => {
         const alive = s.update();
         if (alive) s.draw(ctx);
@@ -3182,6 +3925,9 @@ function initStage(stageIndex) {
     gameState.waveTotal = 0;
     gameState.leftWristHistory = [];
     gameState.rightWristHistory = [];
+    gameState.leftBladeTipHistory  = [];
+    gameState.rightBladeTipHistory = [];
+    gameState.hitParticles = [];
     gameState.leftWristSmooth = { x: null, y: null };
     gameState.rightWristSmooth = { x: null, y: null };
     gameState.weaponPoseSmooth = { left: null, right: null };
@@ -3192,10 +3938,12 @@ function initStage(stageIndex) {
 
 function launchStageOverview() {
     showStageOverview(0, () => {
+        // Tips are now embedded in the Stage 1 story card — no separate step needed
         showStoryCard(gameState.currentStage, () => {
             gameState.isPlaying = true;
-            startAmbience();
+            startAmbience(gameState.currentStage);
             showCameraBadge();
+            showPauseBtn();
             showInstructionBar();
             showGripHintBar();
             spawnMonster();
@@ -3231,8 +3979,9 @@ function retryCurrentStage() {
     showStageOverview(stageToRetry, () => {
         showStoryCard(gameState.currentStage, () => {
             gameState.isPlaying = true;
-            startAmbience();
+            startAmbience(gameState.currentStage);
             showCameraBadge();
+            showPauseBtn();
             showInstructionBar();
             showGripHintBar();
             spawnMonster();
@@ -3249,7 +3998,9 @@ function nextStage() {
         // initStage(completedCount) already called inside showStageOverview
         showStoryCard(gameState.currentStage, () => {
             gameState.isPlaying = true;
+            startAmbience(gameState.currentStage);
             showCameraBadge();
+            showPauseBtn();
             showInstructionBar();
             showGripHintBar();
             spawnMonster();
@@ -3368,7 +4119,7 @@ async function init() {
 
     startBtn.addEventListener("click", startGame);
     nextStageBtn.addEventListener("click", nextStage);
-    playAgainBtn.addEventListener("click", startGame);
+    playAgainBtn.addEventListener("click", () => { stopFireworks(); startGame(); });
     restartBtn.addEventListener("click", retryCurrentStage);
 }
 

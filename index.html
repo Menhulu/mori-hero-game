@@ -47,9 +47,71 @@
             <div id="camera-badge" class="camera-badge hidden" aria-live="polite">
                 <span class="camera-dot"></span> Camera Active
             </div>
+            <!-- Pause button (shown during gameplay) -->
+            <button type="button" id="pause-btn" class="pause-btn hidden" aria-label="Pause game">
+                <span id="pause-btn-icon">⏸</span>
+            </button>
         </div>
 
         <canvas id="game-canvas" aria-label="Game playfield"></canvas>
+
+        <!-- Pause overlay -->
+        <div id="pause-overlay" class="pause-overlay hidden" role="dialog" aria-modal="true" aria-label="Game paused">
+            <div class="pause-inner">
+                <p class="pause-label">TŪ WĀTEA</p>
+                <h2 class="pause-title">⏸ Game Paused</h2>
+                <p class="pause-sub">Take a breath — your people are waiting!</p>
+                <div class="pause-buttons">
+                    <button type="button" id="pause-resume-btn" class="pause-resume-btn">
+                        <span class="pause-btn-maori">Haere tonu</span>
+                        ▶ Continue
+                    </button>
+                    <button type="button" id="pause-exit-btn" class="pause-exit-btn">
+                        Hoki ki tīmata — Exit to Menu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tutorial overlay (shown before Stage 1) -->
+        <div id="tutorial-overlay" class="tutorial-overlay hidden" role="dialog" aria-modal="true" aria-label="How to play">
+            <div class="tut-inner">
+                <p class="tut-label">AKO · HOW TO PLAY</p>
+                <h2 class="tut-title">Kia mōhio — Get ready!</h2>
+                <div class="tut-steps">
+                    <div class="tut-step">
+                        <div class="tut-icon">🦾</div>
+                        <div class="tut-text">
+                            <p class="tut-step-title">Swing your arms</p>
+                            <p class="tut-step-sub">Move your whole arm quickly to strike sea creatures</p>
+                        </div>
+                    </div>
+                    <div class="tut-step">
+                        <div class="tut-icon">⚡</div>
+                        <div class="tut-text">
+                            <p class="tut-step-title">Hit in a row for Combo!</p>
+                            <p class="tut-step-sub">More strikes in a row = bigger score bonus</p>
+                        </div>
+                    </div>
+                    <div class="tut-step">
+                        <div class="tut-icon">💖</div>
+                        <div class="tut-text">
+                            <p class="tut-step-title">Collect hearts for Mauri</p>
+                            <p class="tut-step-sub">Hearts restore your life — don't let creatures past!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="tut-cta">
+                    <button type="button" id="tut-go-btn" class="tut-go-btn">
+                        <span class="tut-btn-maori">Kia kaha!</span>
+                        I'm ready — Let's go!
+                    </button>
+                    <div class="tut-countdown-wrap">
+                        <div id="tut-countdown-bar" class="tut-countdown-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Empty state shown between monster waves -->
         <div id="empty-state" class="empty-state hidden" aria-live="polite">
@@ -76,6 +138,12 @@
                 <p id="story-card-stage" class="story-card-stage"></p>
                 <h2 id="story-card-title" class="story-card-title"></h2>
                 <p id="story-card-desc" class="story-card-desc"></p>
+                <!-- Stage 1 only: inline how-to-play tips -->
+                <div id="sc-tips" class="sc-tips hidden" aria-label="How to play">
+                    <div class="sc-tip"><span class="sc-tip-icon">🦾</span><span class="sc-tip-text"><strong>Swing your arms</strong> to strike sea creatures</span></div>
+                    <div class="sc-tip"><span class="sc-tip-icon">⚡</span><span class="sc-tip-text"><strong>Hit in a row</strong> for a Combo bonus!</span></div>
+                    <div class="sc-tip"><span class="sc-tip-icon">💖</span><span class="sc-tip-text"><strong>Collect hearts</strong> to restore your Mauri</span></div>
+                </div>
                 <button type="button" id="story-card-begin">Begin Stage</button>
             </div>
         </div>
@@ -104,10 +172,26 @@
                             <div id="ov-prog-fill" class="ov-prog-fill"></div>
                         </div>
                         <p id="ov-prog-text" class="ov-prog-text">0 OF 4 COMPLETE</p>
+                        <button type="button" id="ov-change-weapon-btn" class="ov-change-weapon-btn" aria-label="Change weapon">
+                            ⚔ Change Weapon
+                        </button>
                     </div>
                 </div>
                 <p id="ov-story" class="ov-story" aria-live="polite"></p>
                 <div id="ov-cards" class="ov-cards" role="list"></div>
+            </div>
+        </div>
+
+        <!-- Weapon picker modal (overlays stage overview) -->
+        <div id="ov-weapon-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Choose your weapon">
+            <div class="ovm-backdrop"></div>
+            <div class="ovm-panel">
+                <div class="ovm-header">
+                    <h3 class="ovm-title">⚔ Tīpako Rākau · Choose Weapon</h3>
+                    <button type="button" id="ovm-close" class="ovm-close" aria-label="Close">✕</button>
+                </div>
+                <div id="ovm-grid" class="ovm-grid" role="listbox" aria-label="Weapon options"></div>
+                <button type="button" id="ovm-confirm" class="ovm-confirm">Confirm ✓</button>
             </div>
         </div>
 
@@ -226,6 +310,9 @@
             <p>Stage score: <span id="stage-score">0</span></p>
             <button type="button" id="next-stage-btn">Next stage</button>
         </div>
+        <!-- Fireworks canvas: rendered above game-complete-screen during ceremony -->
+        <canvas id="fireworks-canvas" class="hidden" aria-hidden="true"></canvas>
+
         <div id="game-complete-screen" class="hidden">
             <div class="gc-content">
                 <div class="gc-warrior-badge">
