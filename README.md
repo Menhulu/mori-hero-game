@@ -1,151 +1,175 @@
-# Māori Sea Hunt - Arm Exercise Game
+# 🌊 Toa Moana — Sea Warrior
 
-An interactive, culturally responsive arm exercise game that uses computer vision to turn physical movement into gameplay. Swing your arms to defeat sea creatures and protect your people in this immersive fitness experience.
+> *He toa tū māia, he toa tū tūāhu* — A brave warrior stands bold, a blessed warrior stands resolute.
 
-## 🌊 Game Overview
+**Toa Moana** is a browser-based movement game designed for kaumātua (Māori elders). Players use their arms — detected live by a webcam — to slash through sea monsters in a 4-stage journey inspired by the legendary voyage of **Kupe** and his battle against **Te Wheke-a-Muturangi**, the great octopus of the deep.
 
-Māori Sea Hunt combines traditional Māori storytelling with modern pose detection technology to create an engaging workout experience. Players use arm movements to wield virtual weapons, defeat sea monsters, and progress through increasingly challenging stages.
-
-The game uses MediaPipe Pose to track arm movements in real-time, translating physical exercise into an exciting gaming experience that builds strength, coordination, and cultural connection.
-
-## ✨ Features
-
-- **Motion-Controlled Gameplay**: Uses your device's camera and MediaPipe Pose detection to track arm movements in real-time
-- **5 Progressive Stages**: Each stage increases in difficulty with new challenges and sea creatures
-- **Culturally Responsive Design**: Incorporates Māori language, storytelling, and symbolism throughout the game
-- **Multiple Weapons**: Choose between traditional Māori weapons including taiaha (staff) and patu (club)
-- **Combo System**: Build combos with consecutive hits to maximize your score
-- **Safety-First Approach**: Includes clear safety instructions and accessibility features
-- **Responsive UI**: Works on both desktop and mobile devices with camera access
-
-## 🎮 How to Play
-
-### Requirements
-- A device with a working camera (webcam or mobile camera)
-- Modern web browser (Chrome, Firefox, Safari, Edge recommended)
-- Clear space to safely move your arms
-- Internet connection (to load MediaPipe libraries)
-
-### Gameplay Instructions
-
-1. **Launch the Game**: Open `index.html` in your browser or run `npm start`
-2. **Allow Camera Access**: The game needs camera access to track your movements
-3. **Choose Your Weapon**: Select from traditional Māori weapons
-4. **Follow the Story**: Each stage begins with a story card setting the scene
-5. **Swing to Attack**: Move your arms to defeat approaching sea creatures
-6. **Progress Through Stages**: Complete each stage's target score to advance
-7. **Protect Your People**: Maintain your "Mauri" (lives) by avoiding hits from creatures
-
-### Controls
-- **Attack**: Swing your arms with controlled movements
-- **Defend**: Hold your arms in a defensive position to block attacks
-- **Exit**: Press ESC key to exit gameplay at any time
-
-## 🛡️ Safety Guidelines
-
-- Always ensure you have enough space to move your arms safely
-- Start with gentle movements and increase intensity gradually
-- Stop immediately if you feel any pain or discomfort
-- For seated play, ensure you have proper back support
-- Children should play under adult supervision
-
-## 📦 Installation & Setup
-
-### Option 1: Direct Browser Access
-
-1. Clone or download this repository
-2. Open `index.html` in your web browser
-3. Allow camera access when prompted
-
-### Option 2: Local Server (Recommended)
-
-```bash
-# Install dependencies
-npm install
-
-# Start local development server
-npm start
-
-# Open your browser to http://localhost:3000 (or the port shown)
-```
-
-## 🎯 Game Mechanics
-
-### Stages
-1. **Relaxed Exploration**: Learn the basics with slow-moving creatures
-2. **Steady Growth**: Increase your strength with faster opponents
-3. **Focused Challenge**: Test your skills with complex attack patterns
-4. **Final Strike**: Face powerful boss creatures
-5. **Victory**: Celebrate your success as a protector of the people
-
-### Scoring System
-- **Hit Points**: 10-50 points per creature hit, depending on weapon
-- **Combo Multiplier**: 1.5x multiplier for 5+ consecutive hits, 2x for 10+
-- **Stage Bonuses**: 500 points bonus for completing a stage without losing lives
-- **Speed Bonuses**: Additional points for fast, precise movements
-
-### Sea Creatures
-- **Crabs**: Fast-moving, low-health creatures
-- **Eels**: Slippery opponents that require precise timing
-- **Octopuses**: Multi-tentacled creatures with multiple hit points
-- **Electric Fish**: Shock-based attacks that can stun your movement
-- **Turtles**: Well-armored creatures requiring powerful hits
-- **Blowfish**: Inflate to defend themselves against attacks
-
-## 🌐 Technical Details
-
-### Technologies Used
-- **HTML5 Canvas**: Game rendering and animation
-- **CSS3**: Responsive styling and animations
-- **JavaScript (ES6+)**: Game logic and interaction
-- **MediaPipe Pose**: Real-time pose detection and tracking
-- **Serve**: Local development server
-
-### Browser Compatibility
-- Chrome 90+
-- Firefox 88+
-- Safari 14.1+
-- Edge 90+
-
-### Performance Tips
-- Ensure good lighting for optimal pose detection
-- Close other camera-using applications before playing
-- For best results, play in a well-lit room
-- Avoid backlighting that may obscure your silhouette
-
-## 🎨 Cultural Context
-
-Māori Sea Hunt draws inspiration from:
-- **Māori Creation Stories**: The sea as a source of life and challenge
-- **Kaitiakitanga**: The concept of guardianship and protection
-- **Mauri**: The life force that connects all living things
-- **Traditional Weapons**: Taiaha, patu, and other Māori fighting arts
-
-All Māori language used in the game is accompanied by context and explanations to promote cultural understanding.
-
-## 🤝 Contributing
-
-We welcome contributions that align with the game's cultural values and educational mission. Please:
-1. Respect the cultural integrity of Māori content
-2. Follow accessibility best practices
-3. Test all motion-based features thoroughly
-4. Include safety considerations in all new features
-
-## 📄 License
-
-This project is open source and available under the MIT License. Māori cultural content is used with respect and should be treated with appropriate cultural sensitivity.
-
-## 🙏 Acknowledgments
-
-- Te Whare Wānanga o Awanuiārangi for cultural guidance
-- Google MediaPipe for pose detection technology
-- All contributors who have helped shape this project
+Built for the **Rauawaawa Kaumātua Charitable Trust**, the game supports elder wellbeing through purposeful physical movement, cultural storytelling, and friendly competition — aligned with the **Te Whare Tapa Whā** model of Māori health.
 
 ---
 
-*"Kia kaha, kia maia, kia manawanui"* - Be strong, be brave, be steadfast
+## ✨ Features
 
-Let your arms be your strength and your heart be your guide 🌊
+- **Camera-based arm detection** — MediaPipe Pose tracks wrist landmarks in real time; no controller needed
+- **4-stage mythic journey** — Each stage advances Kupe's legendary voyage with a narrated story card
+- **8 sea monster species** — Blowfish, Crab, Eel, Electric Fish, Octopus, Starfish, Turtle, and Seahorse, each with unique movement and kill sound
+- **Weighted spawning by stage** — Gentle creatures early, fearsome bosses in the deep
+- **Combo system** — Chain hits for score multipliers (up to ×8)
+- **Mauri (💖) lives display** — Hearts pulse red when lives are low; gain animation on recovery
+- **Immersive story cards** — Auto-narrated with a deep Web Speech API voice + 4-layer atmospheric ambient soundscape
+- **Weapon trail FX** — Glowing slash trail follows arm movement in real time
+- **Culturally grounded UI** — Māori language labels (Mauri, Toa), ocean colour palette
+
+---
+
+## 🏛️ Cultural Alignment — Te Whare Tapa Whā
+
+| Pillar | How Toa Moana Addresses It |
+|---|---|
+| **Taha Tinana** (physical) | Arm-swing movements = purposeful upper-body exercise |
+| **Taha Hinengaro** (mental) | Focused attention, reaction timing, score goals |
+| **Taha Wairua** (spiritual) | Māori legend, narrated whakapapa of Kupe's journey |
+| **Taha Whānau** (social) | Group sessions at Rauawaawa; shared scores and laughter |
+
+---
+
+## 🌊 The Story: 4 Stages
+
+| Stage | Setting | Narrative Beat | Monster Mix |
+|---|---|---|---|
+| 1 — **The Call** | Coastal shallows | Kupe hears the sea calling | Blowfish, Starfish, Seahorse, Turtle |
+| 2 — **Into the Current** | Open ocean | The shallows yield; something stirs | + Crab, Eel |
+| 3 — **Tangaroa's Trial** | The deep sea | Tangaroa watches — show him you are worthy | + Electric Fish, Octopus |
+| 4 — **Te Wheke Rises** | The abyss | Te Wheke-a-Muturangi wakes — face what Kupe once defeated | Maximum difficulty |
+
+---
+
+## 🚀 Getting Started
+
+### Requirements
+
+- A modern browser (**Chrome recommended** for best MediaPipe + Speech API support)
+- A webcam
+- A reasonably well-lit environment
+
+### Run Locally
+
+```bash
+git clone https://github.com/your-org/maori-hero-game.git
+cd maori-hero-game
+
+# Install dependencies (dev server only)
+npm install
+
+# Start local server
+npm start
+# or use any static server:
+npx serve .
+# then open http://localhost:3000
+```
+
+> **Important:** The game must be served over HTTP/HTTPS — opening `index.html` directly via `file://` will block camera access and MediaPipe WASM loading.
+
+### Controls
+
+| Action | How |
+|---|---|
+| Slash a monster | Swing your **right or left wrist** through it |
+| Pause | Click the **⏸** button (top right during gameplay) |
+| Skip story card | Click **Skip** on the narration overlay |
+| Restart | After game over → click **Play Again** |
+
+---
+
+## 📁 Project Structure
+
+```
+maori-hero-game/
+├── index.html          # Game shell, UI overlay, HUD elements
+├── style.css           # All visual styling, animations, heart lives display
+├── game.js             # Core game loop, MediaPipe integration, monster logic
+└── img/
+    ├── sea-monster/    # AI-generated monster sprites
+    │   ├── blowfish.png
+    │   ├── crab.png
+    │   ├── eel.png
+    │   ├── electric.png
+    │   ├── octopus.png
+    │   ├── starfish.png
+    │   ├── turtle.png
+    │   └── seahorse.png
+    └── story/          # AI-generated story card backgrounds (per stage)
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Game engine | Vanilla **HTML5 Canvas** — no framework |
+| Pose detection | **MediaPipe Pose** (BlazePose, WASM) — wrist landmark tracking |
+| Ambient audio | **Web Audio API** — oscillators, BiquadFilter, GainNode layers |
+| Narration | **Web Speech API** — SpeechSynthesisUtterance, NZ/UK English voice |
+| Monster sprites | **AI-generated** PNG images |
+| Story backgrounds | **AI-generated** illustrated scenes |
+| Deployment | Static HTML — any modern browser with webcam access |
+
+---
+
+## 🎮 Key Technical Mechanics
+
+### Arm Detection
+
+MediaPipe Pose detects 33 body landmarks at ~30 fps. Toa Moana tracks **left wrist** (landmark 15) and **right wrist** (landmark 16). Each frame, wrist velocity is computed; passing through a monster's bounding circle registers a hit.
+
+### Monster Spawning — Parabolic Arc
+
+```js
+vy_initial = -launchVy       // species-tuned upward launch speed
+vy += gravity each frame     // arc back down
+```
+
+Each species has tuned gravity and size multipliers. A **weighted random pool** selects species per stage:
+
+```js
+// Stage 1 example pool (id=0):
+[[BLOWFISH,5], [STARFISH,5], [SEAHORSE,5], [TURTLE,3], [CRAB,2], [EEL,1]]
+// Octopus and Electric Fish are absent from Stage 1
+```
+
+### Atmospheric Ambient Audio (Story Cards)
+
+Four Web Audio API layers routed through a master `GainNode` with 1.8 s fade-in:
+
+1. **55 Hz sine drone** — tremolo at 0.06 Hz (oceanic depth)
+2. **110 + 165 Hz triangle pad** — perfect fifth, breathing LFO
+3. **White noise → LP 100 Hz** — ocean abyss rumble
+4. **660 + 880 Hz sine shimmer** — ethereal high shimmer
+
+### Lives Display
+
+Lives render as emoji hearts (`💖` / `🤍`) with CSS animations — pulse on danger (≤2 lives), pop on gain.
+
+---
+
+## 🤝 Acknowledgements
+
+- **Rauawaawa Kaumātua Charitable Trust** — community partner and primary design audience
+- **University of Waikato** — MInfoTech programme, COMP570
+- Māori legend of **Kupe and Te Wheke-a-Muturangi** — the mythic backbone of this journey
+- **MediaPipe** by Google — real-time pose estimation
+- AI image generation — sea monster sprites and story card illustrations
+
+---
+
+## 📄 Licence
+
+Created for academic and community wellbeing purposes (University of Waikato, MInfoTech COMP570). Please contact the authors before any commercial use. Māori cultural content is used with deep respect for tikanga Māori.
+
+---
+
+*"Kia kaha, kia maia, kia manawanui"* — Be strong, be brave, be steadfast. 🌊
 
 
 

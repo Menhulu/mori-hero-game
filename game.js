@@ -6,10 +6,10 @@
 const STAGE_CONFIGS = [
     {
         // Stage 1 — Calm: slow high arcs, large targets, forgiving
-        // Target ~2.5 min: ~15 kills/min × 10 pts = 150 pts/min → 400 pts ≈ 2.7 min
+        // Target ~5 min: ~15 kills/min × 10 pts = 150 pts/min → 800 pts ≈ 5.3 min
         id: 1,
         name: "Shallow warm-up",
-        targetScore: 400,
+        targetScore: 800,
         lives: 9,
         background: "img/background01.png",
         monsters: {
@@ -24,10 +24,10 @@ const STAGE_CONFIGS = [
     },
     {
         // Stage 2 — Moderate: slightly faster arcs, still comfortable
-        // Target ~2.5 min: ~15 kills/min × 15 pts = 225 pts/min → 550 pts ≈ 2.4 min
+        // Target ~5 min: ~15 kills/min × 15 pts = 225 pts/min → 1100 pts ≈ 4.9 min
         id: 2,
         name: "Surf zone",
-        targetScore: 550,
+        targetScore: 1100,
         lives: 9,
         background: "img/background02.png",
         monsters: {
@@ -42,10 +42,10 @@ const STAGE_CONFIGS = [
     },
     {
         // Stage 3 — Moderate challenge: gentle step up from Stage 2
-        // Target ~2.5 min: ~15 kills/min × 20 pts = 300 pts/min → 750 pts ≈ 2.5 min
+        // Target ~5 min: ~15 kills/min × 20 pts = 300 pts/min → 1500 pts ≈ 5.0 min
         id: 3,
         name: "Deep current",
-        targetScore: 750,
+        targetScore: 1500,
         lives: 8,
         background: "img/background03.png",
         monsters: {
@@ -60,10 +60,10 @@ const STAGE_CONFIGS = [
     },
     {
         // Stage 4 — Challenging: the true peak
-        // Target ~2.5 min: ~15 kills/min × 28 pts = 420 pts/min → 1050 pts ≈ 2.5 min
+        // Target ~5 min: ~15 kills/min × 28 pts = 420 pts/min → 2100 pts ≈ 5.0 min
         id: 4,
         name: "Final abyss",
-        targetScore: 1050,
+        targetScore: 2100,
         lives: 7,
         background: "img/background03.png",
         monsters: {
@@ -123,41 +123,44 @@ const STAGE_OVERVIEW = [
         motto: "Kia tūpato — Stay Alert",
         cardImg: "img/story-card/1-Relaxed Exploration.png",
         details: [
-            { label: "Creatures per wave",  value: "3 – 4",        icon: "wave" },
-            { label: "Speed",               value: "Calm",          icon: "feather" },
-            { label: "Creature size",       value: "Large",         icon: "resize" },
-            { label: "Points per creature", value: "10 pts",        icon: "star" },
-            { label: "Lives",               value: "7  —  room to learn", icon: "heart" }
+            { label: "Creatures per wave",  value: "3 – 4",              icon: "wave"    },
+            { label: "Speed",               value: "Calm",                icon: "feather" },
+            { label: "Creature size",       value: "Large",               icon: "resize"  },
+            { label: "Points per creature", value: "10 pts",              icon: "star"    },
+            { label: "Target score",        value: "800 pts",             icon: "flag"    },
+            { label: "Lives",               value: "9  —  room to learn", icon: "heart"   }
         ]
     },
     {
         maoiName: "Te Tipuranga",
         subtitle: "Steady Growth",
         desc: "Build strength and steady rhythm. Creatures move with more spirit.",
-        minutes: 6,
+        minutes: 5,
         motto: "Kia kaha — Stay Strong",
         cardImg: "img/story-card/2-Steady Growth.png",
         details: [
-            { label: "Creatures per wave",  value: "3 – 5",        icon: "wave" },
-            { label: "Speed",               value: "Moderate",      icon: "run" },
-            { label: "Creature size",       value: "Medium",        icon: "resize" },
-            { label: "Points per creature", value: "15 pts",        icon: "star" },
-            { label: "Lives",               value: "7  —  stay steady",   icon: "heart" }
+            { label: "Creatures per wave",  value: "3 – 5",              icon: "wave"  },
+            { label: "Speed",               value: "Moderate",            icon: "run"   },
+            { label: "Creature size",       value: "Medium",              icon: "resize"},
+            { label: "Points per creature", value: "15 pts",              icon: "star"  },
+            { label: "Target score",        value: "1 100 pts",           icon: "flag"  },
+            { label: "Lives",               value: "9  —  stay steady",   icon: "heart" }
         ]
     },
     {
         maoiName: "Te Wero",
         subtitle: "Focused Challenge",
         desc: "Sharpen your aim and your mind. Patterns shift — stay aware.",
-        minutes: 7,
+        minutes: 6,
         motto: "Wero Tino — Focused Challenge",
         cardImg: "img/story-card/3-Focused Challenge.png",
         details: [
-            { label: "Creatures per wave",  value: "4 – 6",        icon: "wave" },
-            { label: "Speed",               value: "Fast",          icon: "bolt" },
-            { label: "Creature size",       value: "Smaller",       icon: "resize" },
-            { label: "Points per creature", value: "20 pts",        icon: "star" },
-            { label: "Lives",               value: "6  —  fewer mistakes", icon: "heart" }
+            { label: "Creatures per wave",  value: "3 – 4",                   icon: "wave" },
+            { label: "Speed",               value: "Fast",                     icon: "bolt" },
+            { label: "Creature size",       value: "Smaller",                  icon: "resize"},
+            { label: "Points per creature", value: "20 pts",                   icon: "star" },
+            { label: "Target score",        value: "1 500 pts",                icon: "flag" },
+            { label: "Lives",               value: "8  —  fewer mistakes",     icon: "heart"}
         ]
     },
     {
@@ -168,11 +171,12 @@ const STAGE_OVERVIEW = [
         motto: "Ngāwhatu Kai-ponu — Final Strike",
         cardImg: "img/story-card/4-Final Strike.png",
         details: [
-            { label: "Creatures per wave",  value: "6 – 7",        icon: "wave" },
-            { label: "Speed",               value: "Fierce",        icon: "flame" },
-            { label: "Creature size",       value: "Smallest",      icon: "resize" },
-            { label: "Points per creature", value: "28 pts",        icon: "star" },
-            { label: "Lives",               value: "5  —  every hit counts", icon: "heart" }
+            { label: "Creatures per wave",  value: "3 – 5",                icon: "wave"  },
+            { label: "Speed",               value: "Fierce",                icon: "flame" },
+            { label: "Creature size",       value: "Smallest",              icon: "resize"},
+            { label: "Points per creature", value: "28 pts",                icon: "star"  },
+            { label: "Target score",        value: "2 100 pts",             icon: "flag"  },
+            { label: "Lives",               value: "7  —  every hit counts",icon: "heart" }
         ]
     }
 ];
@@ -205,6 +209,27 @@ const STAGE_NARRATIVES = [
     "This is your final stand. Strike with everything, kia kaha."
 ];
 
+/**
+ * Short narration texts — one punchy sentence per stage, spoken aloud on the story card.
+ * Kept brief (~12–18 words) so audio lasts ~10–14 s at rate 0.74.
+ * STAGE_NARRATIVES above remains the longer visual text shown on the overview screen.
+ */
+/**
+ * Short narration texts spoken aloud on the story card (~12–16 words each).
+ * Written in a mythic, elder-storyteller register — pauses marked with em-dashes
+ * so Web Speech API delivers them with natural weight.
+ */
+const STAGE_NARRATION_AUDIO = [
+    // Stage 1 — the haerenga begins
+    "Long ago, Kupe sailed these waters. Now the sea calls again. Raise your arms — and answer.",
+    // Stage 2 — deeper into the ocean
+    "The shallows yield to you. But below the surf, something older stirs. Move, warrior. Do not slow.",
+    // Stage 3 — Tangaroa watches
+    "Tangaroa watches from the deep. He does not grant victory — he reveals who is worthy. Show him.",
+    // Stage 4 — the final stand
+    "In the abyss, Te Wheke-a-Muturangi wakes. What Kupe once defeated — you must face. Kia kaha."
+];
+
 const MIN_SLASH_LEN = 20;
 const WRIST_HISTORY_MAX = 18;
 /** Exponential smoothing: higher = snappier, lower = smoother */
@@ -225,7 +250,8 @@ const monsterImages = [
     "img/sea-monster/electric fish.png",
     "img/sea-monster/octopus.png",
     "img/sea-monster/starfish.png",
-    "img/sea-monster/turtle.png"
+    "img/sea-monster/turtle.png",
+    "img/sea-monster/seahorse.png"   // index 7 — add seahorse.png to img/sea-monster/
 ];
 
 /**
@@ -275,14 +301,79 @@ const WEAPON_MIN_WIDTH_PX = 260;
 
 /** Matches monsterImages indices for behaviour animation */
 const SPECIES = {
-    BLOWFISH: 0,
-    CRAB: 1,
-    EEL: 2,
-    ELECTRIC: 3,
-    OCTOPUS: 4,
-    STARFISH: 5,
-    TURTLE: 6
+    BLOWFISH:  0,
+    CRAB:      1,
+    EEL:       2,
+    ELECTRIC:  3,
+    OCTOPUS:   4,
+    STARFISH:  5,
+    TURTLE:    6,
+    SEAHORSE:  7
 };
+
+/**
+ * Weighted species pool per stage (0-indexed).
+ * Each entry is [speciesIndex, weight]. Higher weight = more likely.
+ * Stage 1: gentle creatures only — no boss (Octopus) or Electric fish.
+ * Stage 2: everything unlocked, Boss/Electric still rare.
+ * Stage 3-4: Boss and Electric become common threats.
+ */
+const SPECIES_POOLS = [
+    // Stage 1 — beginners: floaty, slow, forgiving species
+    [
+        [SPECIES.BLOWFISH,  5],
+        [SPECIES.STARFISH,  5],
+        [SPECIES.SEAHORSE,  5],
+        [SPECIES.TURTLE,    3],
+        [SPECIES.CRAB,      2],
+        [SPECIES.EEL,       1],
+    ],
+    // Stage 2 — everything appears, Boss/Electric very rare
+    [
+        [SPECIES.BLOWFISH,  4],
+        [SPECIES.STARFISH,  4],
+        [SPECIES.SEAHORSE,  4],
+        [SPECIES.TURTLE,    3],
+        [SPECIES.CRAB,      3],
+        [SPECIES.EEL,       2],
+        [SPECIES.ELECTRIC,  1],
+        [SPECIES.OCTOPUS,   1],
+    ],
+    // Stage 3 — harder mix; Electric and Boss become more common
+    [
+        [SPECIES.BLOWFISH,  2],
+        [SPECIES.STARFISH,  2],
+        [SPECIES.SEAHORSE,  2],
+        [SPECIES.TURTLE,    2],
+        [SPECIES.CRAB,      3],
+        [SPECIES.EEL,       3],
+        [SPECIES.ELECTRIC,  3],
+        [SPECIES.OCTOPUS,   2],
+    ],
+    // Stage 4 — peak difficulty; Boss and Electric dominate
+    [
+        [SPECIES.BLOWFISH,  1],
+        [SPECIES.STARFISH,  1],
+        [SPECIES.SEAHORSE,  1],
+        [SPECIES.TURTLE,    2],
+        [SPECIES.CRAB,      3],
+        [SPECIES.EEL,       3],
+        [SPECIES.ELECTRIC,  4],
+        [SPECIES.OCTOPUS,   4],
+    ],
+];
+
+/** Pick a random species index according to the weighted pool for a given stage. */
+function pickWeightedSpecies(stageIndex) {
+    const pool = SPECIES_POOLS[Math.min(stageIndex, SPECIES_POOLS.length - 1)];
+    const totalWeight = pool.reduce((sum, [, w]) => sum + w, 0);
+    let roll = Math.random() * totalWeight;
+    for (const [species, weight] of pool) {
+        roll -= weight;
+        if (roll <= 0) return species;
+    }
+    return pool[pool.length - 1][0]; // fallback
+}
 
 // ─── Audio ────────────────────────────────────────────────────────────────────
 let _audioCtx = null;
@@ -479,6 +570,17 @@ function playSpeciesKillSound(species) {
         g.gain.setValueAtTime(0.45, now);
         g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
         src.start(now); src.stop(now + 0.18);
+    } else if (species === SPECIES.SEAHORSE) {
+        // Gentle chime: two quick high-pitched sine tones — delicate and watery
+        [880, 1320].forEach((freq, i) => {
+            const osc = ctx.createOscillator(); const g = ctx.createGain();
+            osc.connect(g); g.connect(ctx.destination);
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, now + i * 0.06);
+            g.gain.setValueAtTime(0.20, now + i * 0.06);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.06 + 0.22);
+            osc.start(now + i * 0.06); osc.stop(now + i * 0.06 + 0.24);
+        });
     }
     // Other species: default hit sound already plays, no extra needed
 }
@@ -699,7 +801,8 @@ const storyCardStageEl = document.getElementById("story-card-stage");
 const storyCardImgEl   = document.getElementById("story-card-img");
 const storyCardTitleEl = document.getElementById("story-card-title");
 const storyCardDescEl  = document.getElementById("story-card-desc");
-const storyCardBeginBtn= document.getElementById("story-card-begin");
+// NOTE: No cached begin-button reference — the old const caused a stale-DOM bug
+//       starting from Stage 2. Skip button is now #sc-skip-btn (always fresh via getElementById).
 const cameraBadgeEl    = document.getElementById("camera-badge");
 const emptyStateEl     = document.getElementById("empty-state");
 const instructionBarEl = document.getElementById("instruction-bar");
@@ -1087,7 +1190,7 @@ class Monster {
             config.monsters.size.min +
             Math.random() * (config.monsters.size.max - config.monsters.size.min);
         this.size *= MONSTER_SIZE_MULT;
-        this.monsterTypeIndex = Math.floor(Math.random() * loadedMonsterImages.length);
+        this.monsterTypeIndex = pickWeightedSpecies(config.id - 1); // config.id is 1-based
         this.opacity = 1;
         this.spawnAge = 0;
         this.spawnDuration = 22 + Math.floor(Math.random() * 10);
@@ -1100,6 +1203,8 @@ class Monster {
         // Batch hints: side and screen-zone are pre-assigned to prevent clustering
         this._fromLeft = spawnHints.fromLeft;            // undefined = random
         this._targetXFraction = spawnHints.targetXFraction; // undefined = random
+
+        this.hasEnteredScreen = false;  // true once monster is fully inside viewport
 
         this.puffPhase = Math.random() * Math.PI * 2;
         this.puffSpeed = 0.09 + Math.random() * 0.05;
@@ -1141,6 +1246,7 @@ class Monster {
             [SPECIES.BLOWFISH]:  1.35,   // puffs up big — easiest
             [SPECIES.STARFISH]:  1.20,   // slow tumbler
             [SPECIES.TURTLE]:    1.10,   // large shell
+            [SPECIES.SEAHORSE]:  1.05,   // tall and slender — slightly narrow
             [SPECIES.CRAB]:      1.00,   // normal
             [SPECIES.EEL]:       0.95,   // wiggly, narrow
             [SPECIES.ELECTRIC]:  0.85,   // small and twitchy
@@ -1190,23 +1296,36 @@ class Monster {
             this.flickerPhase = Math.random() * Math.PI * 2;
             this.flickerSpeed = 0.14 + config.id * 0.04;   // s1:0.18 s4:0.30 — clearly visible
         } else if (species === SPECIES.TURTLE) {
-            // Heavy: lower, slower, barely tumbles
-            launchVy *= 0.72;
-            launchVx *= 0.65;
-            this.gravity *= 1.18;
+            // Heavy shell: visibly arcs onto screen, but short and quick.
+            // Old values (launchVy*0.72, gravity*1.18, spawn y+size*0.6) gave
+            // too short an arc — turtles barely peeked above the bottom edge.
+            // Fix: spawn closer to screen edge + gentler gravity + a bit more speed.
+            this.y        = gameH + this.size * 0.25;  // closer to screen edge
+            launchVy     *= 0.88;
+            launchVx     *= 0.60;
+            this.gravity *= 1.05;
             this.spin     = (Math.random() - 0.5) * 0.006;
         } else if (species === SPECIES.CRAB) {
-            // Sideways scuttler: very low arc, dominant horizontal velocity.
-            // Direction is random left or right regardless of spawn zone — it
-            // "runs" across the screen. High gravity keeps it close to the ground.
-            launchVy *= 0.48;         // barely leaves ground
-            this.gravity *= 1.45;     // falls back quickly
-            const crabDir = Math.random() > 0.5 ? 1 : -1;
-            // Speed scales with stage but is always dominant over vy
-            const crabSpd = Math.min(13, Math.max(5.0, sp.vxMax * 1.6));
-            launchVx = crabDir * (crabSpd + Math.random() * 2.5);
+            // Crabs enter from a screen side and scuttle horizontally across.
+            // Bottom-up spawning failed because launchVy*0.48 can't overcome
+            // the size*0.6 spawn offset — crabs never made it onto screen.
+            //
+            // New behaviour: spawn just off the left or right edge at a Y position
+            // in the lower 35–62% of the screen. Pure horizontal motion (no arc),
+            // only the walk-bob animation adds subtle vertical bounce.
+            // Running off the far side counts as a miss (same as falling through).
+            const crabDir = Math.random() > 0.5 ? 1 : -1;   // +1 = L→R, -1 = R→L
+            this.x = crabDir > 0
+                ? -this.size * 0.5                // entering from left
+                : gameW + this.size * 0.5;         // entering from right
+            this.y = gameH * (0.35 + Math.random() * 0.27);  // lower 35–62%
+            launchVy      = 0;       // no vertical launch
+            this.gravity  = 0;       // no gravity — horizontal-only movement
+            const crabSpd = Math.min(13, Math.max(4.5, sp.vxMax * 1.5));
+            launchVx      = crabDir * (crabSpd + Math.random() * 2.5);
             this.spin     = 0;
             this.rotation = 0;
+            this.flipX    = crabDir; // face the direction of travel
             this.crabWalkPhase = Math.random() * Math.PI * 2;
         } else if (species === SPECIES.BLOWFISH) {
             // Floaty — puffs up and drifts
@@ -1225,6 +1344,15 @@ class Monster {
         } else if (species === SPECIES.ELECTRIC) {
             // Twitchy — same arc but will zigzag in update()
             this.spin     = (Math.random() - 0.5) * 0.030;
+        } else if (species === SPECIES.SEAHORSE) {
+            // Graceful floater: slow rise, very low gravity, gentle sway.
+            // Stays upright (minimal spin) and bobs side-to-side as it drifts up.
+            this.y        = gameH + this.size * 0.35;  // start just below bottom edge
+            launchVy     *= 0.78;   // rises slowly
+            launchVx     *= 0.40;   // barely drifts sideways — mostly vertical
+            this.gravity *= 0.60;   // very light — floats a long time
+            this.spin     = 0;      // seahorses stay upright
+            this.seahorseBobPhase = Math.random() * Math.PI * 2;
         }
 
         this.vx = launchVx;
@@ -1272,6 +1400,12 @@ class Monster {
             this.eelPhase += this.eelWiggle;
             this.x += Math.sin(this.eelPhase) * this.eelAmp * 0.14 * moveK;
             this.rotation += Math.sin(this.eelPhase * 1.3) * 0.04;
+        } else if (sp === SPECIES.SEAHORSE) {
+            // Gentle side-sway while floating upward — like a real seahorse drifting
+            this.seahorseBobPhase += 0.055;
+            this.x += Math.sin(this.seahorseBobPhase) * 0.9 * moveK;
+            // Subtle tilt left/right matching the sway
+            this.rotation = Math.sin(this.seahorseBobPhase) * 0.10;
         } else if (sp === SPECIES.ELECTRIC) {
             this.electricShock += 0.45 + Math.random() * 0.35;
             this.vx += (Math.random() - 0.5) * 0.48 * moveK;
@@ -1317,20 +1451,39 @@ class Monster {
         this.x += this.vx * moveK;
         this.y += this.vy * moveK;
 
-        // Soft side clamp — nudge back rather than hard bounce,
+        // Track when the monster first becomes visible inside the viewport.
+        // Used so crabs don't get false-positive "lost offside" while still
+        // entering from their spawn edge.
+        if (!this.hasEnteredScreen &&
+            this.x > -this.size * 0.5 && this.x < gameW + this.size * 0.5 &&
+            this.y < gameH + this.size * 0.5) {
+            this.hasEnteredScreen = true;
+        }
+
+        // Soft side clamp for non-crabs — nudge back rather than hard bounce
         // so parabolic arcs near the edge still look natural.
-        if (this.x < -this.size) this.x = -this.size;
-        if (this.x > gameW + this.size) this.x = gameW + this.size;
+        // Crabs are excluded: they must be allowed to exit the far side.
+        if (sp !== SPECIES.CRAB) {
+            if (this.x < -this.size) this.x = -this.size;
+            if (this.x > gameW + this.size) this.x = gameW + this.size;
+        }
 
         // Monster has fallen back below the screen after arcing up → missed!
         // We only count it as "out" on the way DOWN (vy > 0) to avoid
         // penalising the brief moment it spawns below the screen.
         const fellThrough = this.vy > 0 && this.y > gameH + this.size * 0.6;
-        // Also remove if it flew wildly off screen without arcing back
-        const lostOffside = this.x < -this.size * 3 || this.x > gameW + this.size * 3;
 
-        if (fellThrough || lostOffside) {
-            if (fellThrough) {
+        // Crab-specific: exiting the far side after entering counts as a miss.
+        const crabEscaped = sp === SPECIES.CRAB && this.hasEnteredScreen &&
+            (this.x < -this.size * 1.5 || this.x > gameW + this.size * 1.5);
+
+        // Safety net: remove any monster that drifts wildly off screen
+        // (only fires for non-crabs; crabs use crabEscaped above).
+        const lostOffside = sp !== SPECIES.CRAB &&
+            (this.x < -this.size * 3 || this.x > gameW + this.size * 3);
+
+        if (fellThrough || crabEscaped || lostOffside) {
+            if (fellThrough || crabEscaped) {
                 gameState.lives--;
                 gameState.waveMissCount++;
                 showComboBreak(gameState.combo);
@@ -1927,10 +2080,25 @@ if (errorDismissBtn) errorDismissBtn.addEventListener("click", () => {
 });
 
 // ─── Story card ───────────────────────────────────────────────────────────────
+/**
+ * Show the stage story card with auto-narration.
+ * Flow (v5 — narration-driven dismiss, corner skip button):
+ *   1. Card appears; atmospheric ambience starts immediately.
+ *   2. Narration begins 600 ms later.
+ *   3. Narration ends naturally → 1 s breath → card fades → game starts.
+ *   4. "Skip ›" button (top-right corner) dismisses at any time.
+ *   5. Safety fallback: if TTS unavailable, auto-dismiss after 7 s.
+ *
+ * Bug fix (v4+): stale `storyCardBeginBtn` const removed entirely.
+ *   The old impl cloned+re-parented the button on every call, leaving the
+ *   module-level const pointing to a detached node (parentNode === null) by
+ *   Stage 2, causing a silent crash. Now every element is fetched fresh.
+ */
 function showStoryCard(stageIndex, onBegin) {
     const story = STAGE_STORIES[stageIndex];
     if (!story || !storyCardOverlay) { onBegin(); return; }
 
+    // ── Populate content ─────────────────────────────────────────────────
     storyCardStageEl.textContent = story.stage;
     storyCardTitleEl.textContent = story.title;
     storyCardDescEl.textContent  = story.desc;
@@ -1941,55 +2109,104 @@ function showStoryCard(stageIndex, onBegin) {
         storyCardImgEl.classList.add("hidden");
     }
 
-    // Stage 1: show inline how-to-play tips; hide them for all other stages
+    // Stage 1: show inline how-to-play tips
     const scTipsEl = document.getElementById("sc-tips");
-    if (scTipsEl) {
-        if (stageIndex === 0) scTipsEl.classList.remove("hidden");
-        else                  scTipsEl.classList.add("hidden");
-    }
+    if (scTipsEl) scTipsEl.classList.toggle("hidden", stageIndex !== 0);
 
-    // Stage 1 with tips needs more reading time (6 s); other stages use 3 s
-    const displayMs = stageIndex === 0 ? 6000 : 3000;
-
-    // Reset any previous fade-out state
+    // Clean up any leftover DOM from a previous card
+    storyCardOverlay.querySelector(".sc-narration-wrap")?.remove();
     storyCardOverlay.classList.remove("story-card-overlay--fadeout", "hidden");
 
-    // Inject countdown bar (remove old one first)
-    let countdownEl = storyCardOverlay.querySelector(".story-card-countdown");
-    if (!countdownEl) {
-        countdownEl = document.createElement("div");
-        countdownEl.className = "story-card-countdown";
-        countdownEl.innerHTML = '<div class="story-card-countdown-bar"></div>';
-        storyCardOverlay.appendChild(countdownEl);
-    }
-    const bar = countdownEl.querySelector(".story-card-countdown-bar");
-    bar.classList.remove("story-card-countdown-bar--run");
-    // Set transition duration to match displayMs
-    bar.style.transition = `transform ${displayMs / 1000}s linear`;
+    // Start ocean ambience now so it fades in gently under the narration.
+    // The same nodes will keep playing when the game starts — no restart needed.
+    startAmbience(stageIndex);
 
-    // Kick off countdown animation on next frame (so CSS transition fires)
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => bar.classList.add("story-card-countdown-bar--run"));
-    });
+    // ── Shared dismiss ───────────────────────────────────────────────────
+    let _dismissed      = false;
+    let _fallbackTimer  = null;
+    let _narrationTimer = null;
 
-    const doFadeOut = (cb) => {
+    const doFadeOut = () => {
+        if (_dismissed) return;
+        _dismissed = true;
+        clearTimeout(_fallbackTimer);
+        clearTimeout(_narrationTimer);
+        stopNarration();
         storyCardOverlay.classList.add("story-card-overlay--fadeout");
         setTimeout(() => {
             storyCardOverlay.classList.add("hidden");
             storyCardOverlay.classList.remove("story-card-overlay--fadeout");
-            cb();
+            onBegin();
         }, 700);
     };
 
-    const dismissTimer = setTimeout(() => doFadeOut(onBegin), displayMs);
-
-    // Clicking anywhere skips the wait
-    const skipOnce = () => {
-        clearTimeout(dismissTimer);
-        storyCardOverlay.removeEventListener("click", skipOnce);
-        doFadeOut(onBegin);
+    // ── Helper: sync mute button icon + class ────────────────────────────
+    const syncMuteBtn = (btn) => {
+        if (!btn) return;
+        btn.textContent = narrationMuted ? "🔇" : "🔊";
+        btn.classList.toggle("muted", narrationMuted);
+        btn.setAttribute("aria-label", narrationMuted ? "Voice off — tap to turn on" : "Voice on — tap to turn off");
     };
-    storyCardOverlay.addEventListener("click", skipOnce);
+
+    // ── Skip button ───────────────────────────────────────────────────────
+    const skipBtn = document.getElementById("sc-skip-btn");
+    if (skipBtn) {
+        const freshSkip = skipBtn.cloneNode(true);
+        skipBtn.parentNode.replaceChild(freshSkip, skipBtn);
+        freshSkip.addEventListener("click", (e) => { e.stopPropagation(); doFadeOut(); });
+    }
+
+    // ── Mute toggle button ────────────────────────────────────────────────
+    const muteBtn = document.getElementById("sc-mute-btn");
+    if (muteBtn) {
+        const freshMute = muteBtn.cloneNode(true);
+        muteBtn.parentNode.replaceChild(freshMute, muteBtn);
+        syncMuteBtn(freshMute);
+        freshMute.addEventListener("click", (e) => {
+            e.stopPropagation();
+            narrationMuted = !narrationMuted;
+            localStorage.setItem("narrationMuted", narrationMuted);
+            syncMuteBtn(freshMute);
+            if (narrationMuted) {
+                clearTimeout(_narrationTimer);
+                clearTimeout(_fallbackTimer);
+                stopNarration();
+                if (!_dismissed) setTimeout(doFadeOut, 1500);
+            }
+        });
+    }
+
+    // ── One-time hint tooltip ─────────────────────────────────────────────
+    const hintEl = document.getElementById("sc-voice-hint");
+    if (hintEl) {
+        if (!_narrationHintShown && !narrationMuted) {
+            hintEl.classList.remove("hidden");
+            const freshHint = hintEl.cloneNode(true);
+            hintEl.parentNode.replaceChild(freshHint, hintEl);
+            setTimeout(() => freshHint.classList.add("hidden"), 4600);
+            _narrationHintShown = true;
+            localStorage.setItem("narrationHintShown", "true");
+        } else {
+            hintEl.classList.add("hidden");
+        }
+    }
+
+    // ── If muted: auto-dismiss after 1.5 s ───────────────────────────────
+    if (narrationMuted) {
+        _fallbackTimer = setTimeout(doFadeOut, 1500);
+        return;
+    }
+
+    // ── Play narration; auto-dismiss when it finishes ─────────────────────
+    _narrationTimer = setTimeout(() => {
+        if (_dismissed) return;
+        narrateText(() => {
+            if (!_dismissed) setTimeout(doFadeOut, 800);
+        }, stageIndex);
+    }, 400);
+
+    // Safety fallback: if narration never fires onDone (e.g. very long file), cap at 40 s
+    _fallbackTimer = setTimeout(doFadeOut, 40000);
 }
 
 // ─── Stage overview / journey map ────────────────────────────────────────────
@@ -2008,15 +2225,16 @@ function ovSpeedDots(speedLabel) {
     return on.repeat(lvl) + off.repeat(4 - lvl);
 }
 
-/** Build icon stats grid — icon + value + label, 5 columns (2 for locked) */
+/** Build icon stats grid — icon + value + label */
 function ovIconStatsHTML(details, isLocked) {
     if (!details || !details.length) return "";
-    const creatures = (details[0]?.value || "—").replace(/\s/g, "");
-    const speedLbl  = details[1]?.value || "Calm";
-    const sizeLbl   = details[2]?.value || "—";
-    const ptsRaw    = details[3]?.value || "—";
-    const livesRaw  = details[4]?.value || "—";
-    const livesNum  = (livesRaw.match(/\d+/) || ["—"])[0];
+    // details layout: [0] creatures, [1] speed, [2] size, [3] pts/kill, [4] target, [5] lives
+    const creatures  = (details[0]?.value || "—").replace(/\s/g, "");
+    const speedLbl   = details[1]?.value || "Calm";
+    const ptsRaw     = details[3]?.value || "—";
+    const targetRaw  = details[4]?.value || "—";
+    const livesRaw   = details[5]?.value || "—";
+    const livesNum   = (livesRaw.match(/\d+/) || ["—"])[0];
 
     return `<div class="ov-icon-stats">
         <div class="ov-istat" tabindex="0" data-tip="Sea creatures per wave — defeat them all to advance!">
@@ -2038,6 +2256,13 @@ function ovIconStatsHTML(details, isLocked) {
             <div class="ov-istat-text">
                 <span class="ov-istat-val">${ptsRaw}</span>
                 <span class="ov-istat-lbl">Points</span>
+            </div>
+        </div>
+        <div class="ov-istat" tabindex="0" data-tip="Score needed to complete this stage">
+            <span class="ov-istat-icon">🎯</span>
+            <div class="ov-istat-text">
+                <span class="ov-istat-val">${targetRaw}</span>
+                <span class="ov-istat-lbl">Target</span>
             </div>
         </div>
         <div class="ov-istat" tabindex="0" data-tip="Your Mauri (life force) — lives before the journey ends">
@@ -2520,6 +2745,58 @@ function stopAmbience() {
     _ambienceNodes = [];
 }
 
+// ─── Story-card narration (WAV playback only) ─────────────────────────────────
+/**
+ * Plays the pre-recorded WAV narration for a stage.
+ * No TTS, no Web Audio oscillators — HTMLAudioElement only.
+ * onDone() fires when playback ends or on any error/block.
+ */
+
+const STAGE_NARRATION_FILES = [
+    "img/audio/narration-1.wav",
+    "img/audio/narration-2.wav",
+    "img/audio/narration-3.wav",
+    "img/audio/narration-4.wav",
+];
+
+// ── Narration mute preference (persisted in localStorage) ───────────────────
+// Default: muted unless the user has explicitly turned it ON before
+let narrationMuted      = localStorage.getItem("narrationMuted") !== "false";
+let _narrationHintShown = localStorage.getItem("narrationHintShown") === "true";
+
+let _narrationAudio = null;   // the one active HTMLAudioElement
+
+/** Play the WAV for stageIndex. Calls onDone when done or on any failure. */
+function narrateText(onDone, stageIndex) {
+    stopNarration();
+    const path = STAGE_NARRATION_FILES[stageIndex];
+    if (!path) { onDone(); return; }
+
+    const audio = new Audio(path);
+    _narrationAudio = audio;
+
+    const finish = () => {
+        if (_narrationAudio !== audio) return;  // already superseded
+        _narrationAudio = null;
+        onDone();
+    };
+
+    audio.onended  = finish;
+    audio.onerror  = finish;
+    audio.play().catch(finish);   // blocked by autoplay policy → treat as done
+}
+
+/** Immediately stop any playing narration. No fades, no async. */
+function stopNarration() {
+    if (_narrationAudio) {
+        _narrationAudio.onended = null;
+        _narrationAudio.onerror = null;
+        _narrationAudio.pause();
+        _narrationAudio.src = "";
+        _narrationAudio = null;
+    }
+}
+
 // ─── Camera badge ─────────────────────────────────────────────────────────────
 function showCameraBadge() { cameraBadgeEl && cameraBadgeEl.classList.remove("hidden"); }
 function hideCameraBadge() { cameraBadgeEl && cameraBadgeEl.classList.add("hidden"); }
@@ -2546,6 +2823,7 @@ function returnToStart() {
      storyCardOverlay].forEach(el => el && el.classList.add("hidden"));
     hideStageOverview();
     startScreen.classList.remove("hidden");
+    showPlayerBadge();
 }
 window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && gameState.isPlaying) {
@@ -2643,6 +2921,9 @@ function showTutorial(callback) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+/** Track previous lives to detect gains (heart-collect) vs losses */
+let _prevLivesForUI = -1;
+
 function updateUI() {
     const sum = gameState.totalScore + gameState.stageScore;
     scoreEl.textContent = sum;
@@ -2650,8 +2931,28 @@ function updateUI() {
     const config = STAGE_CONFIGS[gameState.currentStage];
     targetEl.textContent = `${gameState.stageScore}/${config.targetScore}`;
     comboEl.textContent = gameState.combo;
-    livesEl.textContent = gameState.lives;
-    livesEl.classList.toggle("lives-danger", gameState.lives <= 2);
+
+    // ── Heart lives display ──────────────────────────────────────
+    const maxLives     = config.lives;
+    const currentLives = Math.max(0, gameState.lives);
+    const isGain       = currentLives > _prevLivesForUI && _prevLivesForUI >= 0;
+    _prevLivesForUI    = currentLives;
+
+    // Build hearts HTML: full hearts first, then lost hearts
+    const hearts = Array.from({ length: maxLives }, (_, i) => {
+        if (i < currentLives) {
+            // Animate the newly gained heart if lives went up
+            const gainClass = (isGain && i === currentLives - 1) ? " lh--gain" : "";
+            return `<span class="lh lh--full${gainClass}" aria-hidden="true">💖</span>`;
+        }
+        return `<span class="lh lh--lost" aria-hidden="true">🤍</span>`;
+    }).join("");
+
+    livesEl.innerHTML = hearts;
+    livesEl.setAttribute("aria-label", `${currentLives} of ${maxLives} lives remaining`);
+    livesEl.classList.toggle("lives-danger", currentLives <= 2);
+    // ─────────────────────────────────────────────────────────────
+
     if (progressFillEl) {
         const pct = Math.min(100, (gameState.stageScore / config.targetScore) * 100);
         progressFillEl.style.width = pct + "%";
@@ -2799,10 +3100,15 @@ function showStageComplete() {
     completedStageEl.textContent = gameState.currentStage + 1;
     stageScoreEl.textContent = gameState.stageScore;
     stageCompleteScreen.classList.remove("hidden");
+    showPlayerBadge();
 }
 
-// ─── Player data — localStorage, no registration needed ──────────────────────
-const PLAYER_STORAGE_KEY = "maori_hero_player_v1";
+// ─── Multi-user leaderboard — shared device support ──────────────────────────
+const LB_STORAGE_KEY = "maori_hero_lb_v2";
+const LB_LAST_PLAYER_KEY = "maori_hero_last_player";
+
+/// Session-only: who is playing right now (not persisted)
+let currentPlayerName = "";
 
 const WARRIOR_TITLES = [
     { min: 0,    title: "Ākonga",                subtitle: "Learner" },
@@ -2821,49 +3127,223 @@ function getWarriorTitle(score) {
     return WARRIOR_TITLES[0];
 }
 
-function loadPlayerData() {
-    try { return JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY)) || null; }
-    catch { return null; }
+/** Load the shared leaderboard array: [{ name, best, plays, lastDate }, ...] */
+function loadLeaderboard() {
+    try { return JSON.parse(localStorage.getItem(LB_STORAGE_KEY)) || []; }
+    catch { return []; }
 }
 
-function savePlayerData(data) {
-    try { localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(data)); } catch {}
+function saveLeaderboard(lb) {
+    try { localStorage.setItem(LB_STORAGE_KEY, JSON.stringify(lb)); } catch {}
 }
 
+/** Record a completed game score for `playerName`. Returns updated leaderboard. */
+function recordScore(playerName, totalScore) {
+    const lb    = loadLeaderboard();
+    const today = new Date().toLocaleDateString("en-NZ");
+    const key   = playerName.trim().toLowerCase();
+    let entry   = lb.find(e => e.name.trim().toLowerCase() === key);
+    if (entry) {
+        entry.plays    = (entry.plays || 0) + 1;
+        entry.best     = Math.max(entry.best || 0, totalScore);
+        entry.lastDate = today;
+    } else {
+        lb.push({ name: playerName.trim() || "Toa", best: totalScore, plays: 1, lastDate: today });
+    }
+    saveLeaderboard(lb);
+    // Remember who played last so we can pre-fill next time
+    try { localStorage.setItem(LB_LAST_PLAYER_KEY, playerName.trim()); } catch {}
+    return lb;
+}
+
+/** Compatibility shim used in showGameComplete */
 function recordGameScore(totalScore) {
-    let data = loadPlayerData() || { name: "Toa", scores: [] };
-    const entry = { score: totalScore, date: new Date().toLocaleDateString("en-NZ") };
-    data.scores.unshift(entry);
-    if (data.scores.length > 20) data.scores = data.scores.slice(0, 20);
-    savePlayerData(data);
-    return data;
+    return recordScore(currentPlayerName || "Toa", totalScore);
 }
 
-function getPersonalBest(scores) {
-    return scores.length ? Math.max(...scores.map(s => s.score)) : 0;
+// ─── Player badge — persistent corner widget, replaces modal ─────────────────
+function initPlayerBadge() {
+    const badge       = document.getElementById("player-badge");
+    if (!badge) return;
+
+    const trigger     = document.getElementById("pb-trigger");
+    const avatarEl    = document.getElementById("pb-avatar");
+    const nameEl      = document.getElementById("pb-name");
+    const popover     = document.getElementById("pb-popover");
+    const input       = document.getElementById("player-name-input");
+    const suggestList = document.getElementById("player-name-suggestions");
+    const confirmBtn  = document.getElementById("pb-confirm");
+
+    // ── Sync badge display to a name ─────────────────────────────────────────
+    function updateBadge(name) {
+        if (name) {
+            badge.classList.remove("player-badge--new");
+            badge.classList.add("player-badge--set");
+            avatarEl.textContent = name.charAt(0).toUpperCase();
+            nameEl.textContent   = name;
+            // Hide callout once name is set
+            const callout = document.getElementById("pb-callout");
+            if (callout) callout.remove();
+        } else {
+            badge.classList.add("player-badge--new");
+            badge.classList.remove("player-badge--set");
+            avatarEl.textContent = "?";
+            nameEl.textContent   = "Add your name";
+            // Inject callout bubble if not already there
+            if (!document.getElementById("pb-callout")) {
+                const callout = document.createElement("div");
+                callout.id = "pb-callout";
+                callout.className = "pb-callout";
+                callout.innerHTML = `<span>👆 Tap here to add your name first!</span>`;
+                badge.appendChild(callout);
+            }
+        }
+    }
+
+    // Initialise from storage immediately — no modal needed
+    const saved = (() => { try { return localStorage.getItem(LB_LAST_PLAYER_KEY) || ""; } catch { return ""; } })();
+    currentPlayerName = saved;
+    updateBadge(saved);
+
+    // Ensure existing saved name appears in leaderboard (for autocomplete)
+    if (saved) {
+        const lb  = loadLeaderboard();
+        const key = saved.toLowerCase();
+        if (!lb.find(e => e.name.trim().toLowerCase() === key)) {
+            lb.push({ name: saved, best: 0, plays: 0, lastDate: new Date().toLocaleDateString("en-NZ") });
+            saveLeaderboard(lb);
+        }
+    }
+
+    // ── Popover open / close ──────────────────────────────────────────────────
+    let popoverOpen = false;
+
+    function openPopover() {
+        popoverOpen = true;
+        popover.classList.remove("hidden");
+        trigger.setAttribute("aria-expanded", "true");
+        // Clear input so user sees all known players immediately
+        input.value = "";
+        setTimeout(() => {
+            input.focus();
+            _pbShowSuggestions(""); // show all known players right away
+        }, 60);
+    }
+
+    function closePopover() {
+        popoverOpen = false;
+        popover.classList.add("hidden");
+        trigger.setAttribute("aria-expanded", "false");
+        _pbHideSuggestions();
+    }
+
+    trigger.addEventListener("click", () => popoverOpen ? closePopover() : openPopover());
+
+    // Close on outside click
+    document.addEventListener("pointerdown", (e) => {
+        if (popoverOpen && !badge.contains(e.target)) closePopover();
+    });
+
+    // ── Autocomplete ──────────────────────────────────────────────────────────
+    let _pbActiveIdx = -1;
+
+    function _pbHideSuggestions() {
+        suggestList.classList.add("hidden");
+        suggestList.innerHTML = "";
+        _pbActiveIdx = -1;
+    }
+
+    function _pbShowSuggestions(query) {
+        const lb = loadLeaderboard();
+        const q  = query.trim().toLowerCase();
+        const matches = lb
+            .filter(e => !q || e.name.toLowerCase().includes(q))
+            .sort((a, b) => (b.lastDate || "").localeCompare(a.lastDate || "") || b.best - a.best)
+            .slice(0, 6);
+
+        if (!matches.length) { _pbHideSuggestions(); return; }
+
+        suggestList.innerHTML = matches.map((e, i) => {
+            const wt = getWarriorTitle(e.best);
+            return `<li role="option" data-name="${e.name}" data-idx="${i}">
+                <span class="ns-avatar">${e.name.charAt(0).toUpperCase()}</span>
+                <span class="ns-name">${e.name}</span>
+                <span class="ns-score">${wt.title} · ${e.best} pts</span>
+            </li>`;
+        }).join("");
+        suggestList.classList.remove("hidden");
+        _pbActiveIdx = -1;
+
+        suggestList.querySelectorAll("li").forEach(li => {
+            li.addEventListener("pointerdown", (ev) => {
+                ev.preventDefault();
+                _pbConfirm(li.dataset.name);
+            });
+        });
+    }
+
+    function _pbHighlight(idx) {
+        const items = suggestList.querySelectorAll("li");
+        items.forEach((li, i) => li.classList.toggle("ns-active", i === idx));
+        if (items[idx]) input.value = items[idx].dataset.name;
+    }
+
+    input.addEventListener("input",  () => _pbShowSuggestions(input.value));
+    input.addEventListener("focus",  () => _pbShowSuggestions(input.value));
+    input.addEventListener("keydown", (e) => {
+        const items = suggestList.querySelectorAll("li");
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            _pbActiveIdx = Math.min(_pbActiveIdx + 1, items.length - 1);
+            _pbHighlight(_pbActiveIdx);
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            _pbActiveIdx = Math.max(_pbActiveIdx - 1, -1);
+            if (_pbActiveIdx === -1) input.value = currentPlayerName;
+            else _pbHighlight(_pbActiveIdx);
+        } else if (e.key === "Enter") {
+            e.preventDefault();
+            _pbConfirm(input.value);
+        } else if (e.key === "Escape") {
+            closePopover();
+        }
+    });
+
+    confirmBtn.addEventListener("click", () => _pbConfirm(input.value));
+
+    // ── Confirm selection ─────────────────────────────────────────────────────
+    function _pbConfirm(name) {
+        const trimmed = name.trim();
+        if (!trimmed) return;          // don't confirm an empty name
+        currentPlayerName = trimmed;
+        try { localStorage.setItem(LB_LAST_PLAYER_KEY, trimmed); } catch {}
+
+        // Register in leaderboard immediately so autocomplete works next time
+        const lb  = loadLeaderboard();
+        const key = trimmed.toLowerCase();
+        if (!lb.find(e => e.name.trim().toLowerCase() === key)) {
+            lb.push({ name: trimmed, best: 0, plays: 0, lastDate: new Date().toLocaleDateString("en-NZ") });
+            saveLeaderboard(lb);
+        }
+
+        updateBadge(trimmed);
+        closePopover();
+        _refreshStartBtn();           // re-evaluate start button now that name is set
+    }
 }
 
-function showNameSetup(onDone) {
-    const overlay = document.getElementById("name-setup-overlay");
-    if (!overlay) { onDone(); return; }
-    overlay.classList.remove("hidden");
-
-    const input  = document.getElementById("player-name-input");
-    const btn    = document.getElementById("name-setup-confirm");
-
-    // Small delay so the overlay animation finishes before auto-focusing
-    setTimeout(() => input.focus(), 120);
-
-    const confirm = () => {
-        const name = input.value.trim() || "Toa";
-        savePlayerData({ name, scores: [] });
-        overlay.classList.add("hidden");
-        onDone();
-    };
-
-    btn.addEventListener("click", confirm, { once: true });
-    input.addEventListener("keydown", (e) => { if (e.key === "Enter") confirm(); }, { once: true });
+function showPlayerBadge() {
+    const badge = document.getElementById("player-badge");
+    if (badge) badge.classList.remove("hidden");
 }
+
+function hidePlayerBadge() {
+    const badge = document.getElementById("player-badge");
+    if (badge) { badge.classList.add("hidden"); document.getElementById("pb-popover")?.classList.add("hidden"); }
+}
+
+// No-op shim — badge replaces the modal; kept so nothing else breaks
+function showNameSetup(onDone) { onDone(); }
 
 // ─── Fireworks ceremony ───────────────────────────────────────────────────────
 const fwCanvas  = document.getElementById("fireworks-canvas");
@@ -3020,41 +3500,39 @@ function showGameComplete() {
     playVictoryFanfare();
     startFireworks(3000);
 
-    // Record score; get fresh data
-    const data       = recordGameScore(gameState.totalScore);
-    const allScores  = data.scores;
-    const best       = getPersonalBest(allScores);
-    // Previous best = best before this game (exclude first entry)
-    const prevBest   = getPersonalBest(allScores.slice(1));
-    const isNewBest  = gameState.totalScore >= prevBest && allScores.length === 1
-                       || gameState.totalScore > prevBest;
+    // Record score into shared leaderboard; get fresh data
+    const lb         = recordGameScore(gameState.totalScore);
+    const myKey      = (currentPlayerName || "Toa").trim().toLowerCase();
+    const myEntry    = lb.find(e => e.name.trim().toLowerCase() === myKey);
+    const myBest     = myEntry ? myEntry.best : gameState.totalScore;
+    const isNewBest  = gameState.totalScore >= myBest;
 
     // Warrior badge
-    const wt = getWarriorTitle(best);
+    const wt = getWarriorTitle(myBest);
     const nameEl  = document.getElementById("gc-warrior-name");
     const titleEl = document.getElementById("gc-warrior-title");
-    if (nameEl)  nameEl.textContent  = data.name;
+    if (nameEl)  nameEl.textContent  = currentPlayerName || "Toa";
     if (titleEl) titleEl.textContent = `${wt.title} — ${wt.subtitle}`;
 
     // Scores
     totalScoreEl.textContent = gameState.totalScore;
     const bestEl = document.getElementById("gc-personal-best");
-    if (bestEl) bestEl.textContent = best;
+    if (bestEl) bestEl.textContent = myBest;
 
     const newBestEl = document.getElementById("gc-new-best");
     if (newBestEl) newBestEl.classList.toggle("hidden", !isNewBest);
 
-    // Top-5 leaderboard (sorted by score desc)
+    // All-players leaderboard — top 5 by best score, current player highlighted
     const lbEl = document.getElementById("gc-lb-list");
     if (lbEl) {
-        const medals = ["🥇", "🥈", "🥉", "4", "5"];
-        const top5   = [...allScores].sort((a, b) => b.score - a.score).slice(0, 5);
+        const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
+        const top5   = [...lb].sort((a, b) => b.best - a.best).slice(0, 5);
         lbEl.innerHTML = top5.map((e, i) => {
-            const isCurrent = i === 0 && e.score === gameState.totalScore;
+            const isCurrent = e.name.trim().toLowerCase() === myKey;
             return `<li class="gc-lb-row${isCurrent ? " gc-lb-row--current" : ""}">
                 <span class="gc-lb-rank">${medals[i] ?? (i + 1)}</span>
-                <span class="gc-lb-score">${e.score}</span>
-                <span class="gc-lb-date">${e.date}</span>
+                <span class="gc-lb-name">${e.name}</span>
+                <span class="gc-lb-score">${e.best}</span>
             </li>`;
         }).join("");
     }
@@ -3063,6 +3541,7 @@ function showGameComplete() {
     gameCompleteScreen.style.backgroundSize  = "cover";
     gameCompleteScreen.style.backgroundPosition = "center";
     gameCompleteScreen.classList.remove("hidden");
+    showPlayerBadge();
 }
 
 function endGame() {
@@ -3081,6 +3560,7 @@ function endGame() {
     reachedStageEl.textContent = gameState.currentStage + 1;
     finalScoreEl.textContent = gameState.totalScore + gameState.stageScore;
     gameOverScreen.classList.remove("hidden");
+    showPlayerBadge();
 }
 
 function cubicBezierPoint(b0, b1, b2, b3, t) {
@@ -3933,15 +4413,15 @@ function initStage(stageIndex) {
     gameState.weaponPoseSmooth = { left: null, right: null };
 
     setBackground(config.background);
+    _prevLivesForUI = -1;  // reset so first updateUI of new stage skips gain-animation
     updateUI();
 }
 
 function launchStageOverview() {
     showStageOverview(0, () => {
-        // Tips are now embedded in the Stage 1 story card — no separate step needed
         showStoryCard(gameState.currentStage, () => {
             gameState.isPlaying = true;
-            startAmbience(gameState.currentStage);
+            // Ambience already started inside showStoryCard — no need to restart here
             showCameraBadge();
             showPauseBtn();
             showInstructionBar();
@@ -3959,12 +4439,8 @@ async function startGame() {
     gameCompleteScreen.classList.add("hidden");
     gameOverScreen.classList.add("hidden");
 
-    // First-time player: ask for name before entering the game
-    if (!loadPlayerData()) {
-        showNameSetup(launchStageOverview);
-    } else {
-        launchStageOverview();
-    }
+    hidePlayerBadge();
+    launchStageOverview();
 }
 
 /**
@@ -3979,7 +4455,7 @@ function retryCurrentStage() {
     showStageOverview(stageToRetry, () => {
         showStoryCard(gameState.currentStage, () => {
             gameState.isPlaying = true;
-            startAmbience(gameState.currentStage);
+            // Ambience already started inside showStoryCard — no need to restart here
             showCameraBadge();
             showPauseBtn();
             showInstructionBar();
@@ -3995,10 +4471,9 @@ function nextStage() {
     stageCompleteScreen.classList.add("hidden");
 
     showStageOverview(completedCount, () => {
-        // initStage(completedCount) already called inside showStageOverview
         showStoryCard(gameState.currentStage, () => {
             gameState.isPlaying = true;
-            startAmbience(gameState.currentStage);
+            // Ambience already started inside showStoryCard — no need to restart here
             showCameraBadge();
             showPauseBtn();
             showInstructionBar();
@@ -4009,13 +4484,29 @@ function nextStage() {
     });
 }
 
+let _cameraReady = false;
+
 function enableStartAfterCamera() {
+    _cameraReady = true;
+    _refreshStartBtn();
+}
+
+/** Enable the Start button only when BOTH camera is ready AND a name is set. */
+function _refreshStartBtn() {
     const cameraStatusEl = document.getElementById("camera-status");
-    if (cameraStatusEl) {
-        cameraStatusEl.textContent =
-            "Camera is ready. You can start the game.";
+    const hasName = !!currentPlayerName;
+
+    if (!_cameraReady) return; // camera not done yet — leave as-is
+
+    if (!hasName) {
+        startBtn.disabled = true;
+        if (cameraStatusEl)
+            cameraStatusEl.textContent = "Camera ready — please add your name (top-right) to begin.";
+    } else {
+        startBtn.disabled = false;
+        if (cameraStatusEl)
+            cameraStatusEl.textContent = "Camera is ready. You can start the game.";
     }
-    startBtn.disabled = false;
 }
 
 function buildWeaponPicker() {
@@ -4116,6 +4607,8 @@ async function init() {
     setBackground(STAGE_CONFIGS[0].background);
 
     buildWeaponPicker();
+    initPlayerBadge();
+    showPlayerBadge();
 
     startBtn.addEventListener("click", startGame);
     nextStageBtn.addEventListener("click", nextStage);

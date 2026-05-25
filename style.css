@@ -1166,15 +1166,54 @@ body {
     50%       { opacity: 0.35; }
 }
 
-/* ── Lives danger warning ───────────────────────────────────── */
-#lives.lives-danger {
-    color: #ef4444;
-    animation: lives-flash 0.7s ease-in-out infinite alternate;
+/* ── Lives as heart icons ────────────────────────────────────── */
+.score-item--lives {
+    align-items: center;
 }
 
-@keyframes lives-flash {
-    from { text-shadow: 0 0 0px #ef4444; }
-    to   { text-shadow: 0 0 18px #ef4444, 0 0 6px #ef4444; }
+.lives-hearts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1px;
+    max-width: 96px;   /* 5 per row → wraps to 2 rows for 9 lives */
+    line-height: 1;
+}
+
+/* Individual heart spans */
+.lh {
+    font-size: 17px;
+    line-height: 1;
+    display: inline-block;
+    transition: transform 0.15s ease, opacity 0.2s ease;
+    user-select: none;
+}
+
+/* Lost hearts — dim white heart */
+.lh--lost {
+    opacity: 0.22;
+    filter: grayscale(1);
+}
+
+/* Danger mode (≤ 2 lives): remaining hearts pulse red */
+.lives-hearts.lives-danger .lh--full {
+    animation: heart-pulse 0.65s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 5px #ef4444);
+}
+
+@keyframes heart-pulse {
+    from { transform: scale(1);    filter: drop-shadow(0 0 3px #ef4444); }
+    to   { transform: scale(1.28); filter: drop-shadow(0 0 10px #ef4444); }
+}
+
+/* Tiny pop when a heart is gained (added via JS) */
+@keyframes heart-gain {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.55); }
+    100% { transform: scale(1); }
+}
+.lh--gain {
+    animation: heart-gain 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ── Māori affirmation popup ────────────────────────────────── */
@@ -1336,7 +1375,136 @@ body {
     margin: 0;
 }
 
-#story-card-begin { display: none; }
+/* ── Corner action bar (mute + skip, top-right) ─────────────── */
+.sc-corner-actions {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ── Voice hint tooltip (one-time, fades in then out) ───────── */
+.sc-voice-hint {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    white-space: nowrap;
+    background: rgba(8, 28, 58, 0.90);
+    color: rgba(202, 240, 248, 0.95);
+    border: 1px solid rgba(142, 202, 230, 0.30);
+    border-radius: 10px;
+    padding: 7px 13px;
+    font-size: clamp(12px, 1.6vw, 14px);
+    font-weight: 500;
+    pointer-events: none;
+    animation: sc-hint-fade 4.5s ease forwards;
+}
+@keyframes sc-hint-fade {
+    0%   { opacity: 0; transform: translateY(-6px); }
+    12%  { opacity: 1; transform: translateY(0); }
+    70%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-4px); }
+}
+
+/* ── Mute toggle button ─────────────────────────────────────── */
+.sc-mute-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: rgba(10, 35, 66, 0.45);
+    border: 1px solid rgba(142, 202, 230, 0.30);
+    border-radius: 50%;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    user-select: none;
+    line-height: 1;
+}
+.sc-mute-btn:hover {
+    background: rgba(10, 35, 66, 0.70);
+    border-color: rgba(142, 202, 230, 0.65);
+}
+.sc-mute-btn:active  { transform: scale(0.92); }
+.sc-mute-btn.muted   { opacity: 0.55; }
+
+/* ── Skip button (top-right corner, subtle) ─────────────────── */
+.sc-skip-btn {
+    padding: 8px 18px;
+    font-size: clamp(13px, 1.8vw, 15px);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: rgba(202, 240, 248, 0.75);
+    background: rgba(10, 35, 66, 0.45);
+    border: 1px solid rgba(142, 202, 230, 0.30);
+    border-radius: 30px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
+    user-select: none;
+}
+.sc-skip-btn:hover {
+    color: #fff;
+    background: rgba(10, 35, 66, 0.70);
+    border-color: rgba(142, 202, 230, 0.65);
+}
+.sc-skip-btn:active { transform: scale(0.96); }
+
+/* ── Narration waveform indicator ───────────────────────────── */
+.sc-narration-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    animation: scNarFadeIn 0.4s ease both;
+}
+@keyframes scNarFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.sc-narration-hint {
+    font-size: clamp(13px, 1.8vw, 15px);
+    color: rgba(202, 240, 248, 0.65);
+    letter-spacing: 0.04em;
+    margin: 0;
+}
+
+/* Animated waveform bars — 7 bars with staggered heights */
+.sc-waveform {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 32px;
+}
+.sc-wv-bar {
+    display: block;
+    width: 5px;
+    border-radius: 3px;
+    background: linear-gradient(to top, #219ebc, #90e0ef);
+    animation: scWvPulse 0.85s ease-in-out infinite alternate;
+    transform-origin: bottom;
+}
+.sc-wv-bar:nth-child(1) { animation-delay: 0.00s; }
+.sc-wv-bar:nth-child(2) { animation-delay: 0.12s; }
+.sc-wv-bar:nth-child(3) { animation-delay: 0.24s; }
+.sc-wv-bar:nth-child(4) { animation-delay: 0.10s; }
+.sc-wv-bar:nth-child(5) { animation-delay: 0.36s; }
+.sc-wv-bar:nth-child(6) { animation-delay: 0.08s; }
+.sc-wv-bar:nth-child(7) { animation-delay: 0.20s; }
+
+@keyframes scWvPulse {
+    from { height: 6px;  opacity: 0.5; }
+    to   { height: 28px; opacity: 1.0; }
+}
 
 /* ── Stage-1 inline tips (inside story card) ────────────────── */
 .sc-tips {
@@ -1383,27 +1551,75 @@ body {
 }
 .sc-tip-text strong { color: #fff; }
 
-/* Countdown progress bar at bottom of story card */
-.story-card-countdown {
+/* ── Wave countdown bar at the bottom of story card ─────────── */
+.sc-wave-countdown {
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 100%;
-    height: 4px;
-    background: rgba(142, 202, 230, 0.15);
-    z-index: 2;
+    right: 0;
+    height: 72px;
     overflow: hidden;
+    z-index: 3;
+    pointer-events: none;
 }
-.story-card-countdown-bar {
+
+/* Ocean-water fill — grows left-to-right via JS width transition */
+.sc-wave-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
     height: 100%;
-    width: 100%;
-    background: linear-gradient(90deg, #8ecae6, #219ebc);
-    transform-origin: left;
-    transform: scaleX(1);
-    transition: transform 3s linear;
+    width: 0%;
+    /* duration set by JS: element.style.transition */
+    background: linear-gradient(
+        to top,
+        rgba(13, 60, 100, 0.82) 0%,
+        rgba(0, 130, 180, 0.50) 55%,
+        rgba(0, 191, 216, 0.18) 100%
+    );
+    /* flowing inner shimmer */
+    background-size: 200% 100%;
+    animation: waveFlow 2.2s ease-in-out infinite alternate;
 }
-.story-card-countdown-bar--run {
-    transform: scaleX(0);
+@keyframes waveFlow {
+    0%   { filter: brightness(1.0); }
+    100% { filter: brightness(1.18); }
+}
+
+/* Crest blob — right edge of fill, bobs up and down */
+.sc-wave-crest {
+    position: absolute;
+    bottom: 0;
+    left: 0;           /* JS keeps this aligned to fill right edge */
+    width: 56px;
+    height: 100%;
+    background: radial-gradient(
+        ellipse 100% 55% at 50% 100%,
+        rgba(0, 191, 216, 0.55) 0%,
+        transparent 100%
+    );
+    transform: translateX(-50%);
+    animation: waveCresting 1.4s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+@keyframes waveCresting {
+    0%   { transform: translateX(-50%) scaleY(1.00); opacity: 0.8; }
+    100% { transform: translateX(-50%) scaleY(1.28); opacity: 1.0; }
+}
+
+/* Thin bright top-edge line on the fill */
+.sc-wave-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right,
+        rgba(0, 191, 216, 0.0),
+        rgba(0, 191, 216, 0.9) 50%,
+        rgba(144, 224, 239, 0.4) 100%
+    );
 }
 
 /* ── Error card ─────────────────────────────────────────────── */
@@ -1555,7 +1771,214 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   NAME SETUP OVERLAY — first visit only
+   PLAYER BADGE — persistent top-right corner widget
+   ══════════════════════════════════════════════════════════════ */
+#player-badge {
+    position: fixed;
+    top: 18px;
+    right: 22px;
+    z-index: 120;
+}
+#player-badge.hidden { display: none; }
+
+/* ── Trigger chip ────────────────────────────────────────────── */
+.pb-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px 8px 8px;
+    background: rgba(6, 22, 50, 0.82);
+    border: 1px solid rgba(142, 202, 230, 0.30);
+    border-radius: 50px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: inherit;
+}
+.pb-trigger:hover {
+    border-color: rgba(142, 202, 230, 0.65);
+    box-shadow: 0 0 0 3px rgba(72, 202, 228, 0.12);
+}
+
+.pb-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0077b6, #48cae4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+/* New-player state: amber border + pulsing glow on whole chip */
+.player-badge--new .pb-trigger {
+    border-color: rgba(255, 209, 102, 0.7);
+    animation: pb-chip-pulse 2s ease-in-out infinite;
+}
+.player-badge--new .pb-avatar {
+    background: linear-gradient(135deg, rgba(255,209,102,0.25), rgba(244,162,97,0.25));
+    color: #ffd166;
+}
+@keyframes pb-chip-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 209, 102, 0.6); }
+    50%       { box-shadow: 0 0 0 10px rgba(255, 209, 102, 0); }
+}
+
+.pb-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.2;
+}
+.pb-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(142, 202, 230, 0.55);
+}
+.pb-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.player-badge--new .pb-name {
+    color: rgba(142, 202, 230, 0.65);
+    font-weight: 500;
+}
+.pb-chevron {
+    font-size: 12px;
+    color: rgba(142, 202, 230, 0.55);
+    transition: transform 0.2s;
+}
+.pb-trigger[aria-expanded="true"] .pb-chevron { transform: rotate(180deg); }
+
+/* ── Callout bubble (new-user only) ─────────────────────────── */
+.pb-callout {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    background: linear-gradient(135deg, #ffd166, #f4a261);
+    color: #023047;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 16px;
+    border-radius: 14px;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: pb-callout-bounce 1.8s ease-in-out infinite;
+    box-shadow: 0 4px 18px rgba(255, 180, 0, 0.45);
+}
+/* Arrow pointing up-right toward the badge */
+.pb-callout::before {
+    content: "";
+    position: absolute;
+    top: -7px;
+    right: 22px;
+    border: 7px solid transparent;
+    border-bottom-color: #ffd166;
+    border-top: none;
+}
+@keyframes pb-callout-bounce {
+    0%, 100% { transform: translateY(0);    opacity: 1;    }
+    45%       { transform: translateY(6px); opacity: 0.85; }
+}
+
+/* ── Popover ─────────────────────────────────────────────────── */
+.pb-popover {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: clamp(280px, 32vw, 360px);
+    background: rgba(6, 18, 44, 0.97);
+    border: 1px solid rgba(142, 202, 230, 0.28);
+    border-radius: 18px;
+    padding: 18px 16px 14px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(16px);
+    animation: pb-drop 0.18s ease;
+    overflow: visible;  /* never clip the suggestions list */
+}
+@keyframes pb-drop {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.pb-popover.hidden { display: none; }
+
+.pb-pop-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(142, 202, 230, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 10px;
+}
+
+.pb-input {
+    width: 100%;
+    padding: 13px 16px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(3, 14, 34, 0.7);
+    border: 1.5px solid rgba(142, 202, 230, 0.25);
+    border-radius: 12px;
+    outline: none;
+    caret-color: #8ecae6;
+}
+.pb-input::placeholder { color: rgba(142, 202, 230, 0.30); }
+.pb-input:focus {
+    border-color: #8ecae6;
+    box-shadow: 0 0 0 3px rgba(142, 202, 230, 0.15);
+}
+
+.pb-confirm-btn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 13px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #023047;
+    background: linear-gradient(135deg, #ffd166, #f4a261);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.pb-confirm-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 180, 0, 0.45);
+}
+.pb-confirm-btn:active { transform: translateY(0); }
+
+/* Suggestions inside the popover — flow inline, no absolute clipping */
+.pb-popover .name-setup-field-wrap { margin-bottom: 0; }
+.pb-popover .name-suggestions {
+    position: static !important;
+    top: unset !important;
+    margin-top: 6px;
+    border-radius: 12px;
+    max-height: 220px;
+    box-shadow: none;
+    border-color: rgba(142, 202, 230, 0.20);
+}
+.pb-popover .name-suggestions li {
+    padding: 12px 16px;
+    font-size: clamp(15px, 1.8vw, 18px);
+}
+.pb-popover .name-suggestions li .ns-avatar {
+    width: 32px; height: 32px;
+    font-size: 14px;
+}
+.pb-popover .name-suggestions li .ns-score {
+    font-size: 12px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NAME SETUP OVERLAY — legacy (kept but no longer used as modal)
    ══════════════════════════════════════════════════════════════ */
 #name-setup-overlay {
     position: absolute;
@@ -1616,6 +2039,71 @@ body {
     font-style: italic;
 }
 
+/* Wrap input + dropdown together */
+.name-setup-field-wrap {
+    position: relative;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+/* Autocomplete dropdown */
+.name-suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    z-index: 20;
+    background: rgba(6, 20, 46, 0.97);
+    border: 1px solid rgba(142, 202, 230, 0.35);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    max-height: 260px;
+    overflow-y: auto;
+    list-style: none;
+    margin: 0; padding: 4px 0;
+}
+.name-suggestions li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 22px;
+    font-size: clamp(18px, 2.4vw, 22px);
+    color: rgba(202, 240, 248, 0.9);
+    cursor: pointer;
+    border-bottom: 1px solid rgba(142, 202, 230, 0.08);
+    transition: background 0.15s;
+}
+.name-suggestions li:last-child { border-bottom: none; }
+.name-suggestions li:hover,
+.name-suggestions li:focus,
+.name-suggestions li.ns-active {
+    background: rgba(72, 202, 228, 0.18);
+    outline: none;
+}
+.name-suggestions li .ns-avatar {
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0077b6, #48cae4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700;
+    color: #fff;
+}
+.name-suggestions li .ns-name {
+    font-weight: 600;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.name-suggestions li .ns-score {
+    margin-left: auto;
+    font-size: clamp(12px, 1.5vw, 14px);
+    color: #ffd166;
+    white-space: nowrap;
+    text-align: right;
+}
+
 .name-setup-input {
     width: 100%;
     padding: 18px 22px;
@@ -1656,6 +2144,47 @@ body {
     box-shadow: 0 8px 28px rgba(255, 180, 0, 0.5);
 }
 .name-setup-btn:active { transform: translateY(0); }
+
+/* Returning player one-tap view */
+#ns-returning {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+}
+.ns-returning-avatar {
+    width: clamp(72px, 10vw, 96px);
+    height: clamp(72px, 10vw, 96px);
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0077b6 0%, #48cae4 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 800;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(72, 202, 228, 0.25);
+}
+.ns-returning-name {
+    color: #fff;
+    font-size: clamp(30px, 5vw, 52px);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-align: center;
+}
+.ns-switch-btn {
+    background: none;
+    border: none;
+    color: rgba(142, 202, 230, 0.65);
+    font-size: clamp(15px, 1.8vw, 18px);
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.15s;
+    margin-top: -4px;
+}
+.ns-switch-btn:hover { color: #8ecae6; }
 
 /* ══════════════════════════════════════════════════════════════
    GAME COMPLETE SCREEN — warrior badge + leaderboard
@@ -1794,11 +2323,21 @@ body {
     text-align: center;
     line-height: 1;
 }
+.gc-lb-name {
+    flex: 1;
+    color: rgba(202, 240, 248, 0.9);
+    font-size: clamp(15px, 1.8vw, 19px);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.gc-lb-row--current .gc-lb-name { color: #ffd166; }
 .gc-lb-score {
     color: #fff;
-    font-size: clamp(18px, 2.2vw, 24px);
+    font-size: clamp(16px, 2vw, 22px);
     font-weight: 700;
-    flex: 1;
+    white-space: nowrap;
 }
 .gc-lb-row--current .gc-lb-score { color: #ffd166; }
 .gc-lb-date {
@@ -1916,9 +2455,66 @@ body {
     margin: 0;
 }
 
+/* ── Overview header buttons row (mute + change weapon) ─────────── */
+.ov-header-btns {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Wrapper so hint tooltip is positioned relative to mute btn */
+.ov-mute-wrap {
+    position: relative;
+}
+
+/* ── Overview mute button ───────────────────────────────────────── */
+.ov-mute-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: rgba(144, 224, 239, 0.10);
+    border: 1px solid rgba(144, 224, 239, 0.35);
+    border-radius: 50%;
+    color: rgba(202, 240, 248, 0.85);
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background 0.18s, border-color 0.18s, transform 0.12s;
+    user-select: none;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.ov-mute-btn:hover {
+    background: rgba(144, 224, 239, 0.22);
+    border-color: rgba(144, 224, 239, 0.75);
+}
+.ov-mute-btn:active  { transform: scale(0.92); }
+.ov-mute-btn.muted   { opacity: 0.50; }
+
+/* ── Overview voice hint tooltip (one-time, auto-fades) ─────────── */
+.ov-voice-hint {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    white-space: nowrap;
+    background: rgba(8, 28, 58, 0.92);
+    color: rgba(202, 240, 248, 0.95);
+    border: 1px solid rgba(142, 202, 230, 0.30);
+    border-radius: 10px;
+    padding: 7px 13px;
+    font-size: clamp(12px, 1.5vw, 14px);
+    font-weight: 500;
+    pointer-events: none;
+    animation: sc-hint-fade 4.5s ease forwards;
+}
+/* Reuses the same keyframe defined in the story-card section */
+
 /* ── Change Weapon button (stage overview header) ───────────────── */
 .ov-change-weapon-btn {
-    margin-top: 10px;
     padding: 9px 18px;
     background: rgba(144, 224, 239, 0.10);
     border: 1.5px solid rgba(144, 224, 239, 0.45);

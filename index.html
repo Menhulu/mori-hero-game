@@ -38,9 +38,9 @@
                     <span class="label">Combo</span>
                     <span id="combo" class="value">0</span>
                 </div>
-                <div class="score-item">
+                <div class="score-item score-item--lives">
                     <span class="label">Mauri</span>
-                    <span id="lives" class="value">5</span>
+                    <div id="lives" class="lives-hearts" aria-live="polite" aria-label="5 lives remaining"></div>
                 </div>
             </div>
             <!-- Camera active badge (shown during gameplay) -->
@@ -133,6 +133,20 @@
 
         <!-- Story card overlay (shown before each stage) -->
         <div id="story-card-overlay" class="story-card-overlay hidden">
+            <!-- Top-right corner actions: mute toggle + skip -->
+            <div class="sc-corner-actions">
+                <!-- One-time hint tooltip (shown on first ever story card) -->
+                <div id="sc-voice-hint" class="sc-voice-hint hidden" aria-live="polite">
+                    Tap to turn off voice
+                </div>
+                <button type="button" id="sc-mute-btn" class="sc-mute-btn" aria-label="Toggle voice narration">
+                    🔊
+                </button>
+                <button type="button" id="sc-skip-btn" class="sc-skip-btn" aria-label="Skip narration and begin">
+                    Skip &rsaquo;
+                </button>
+            </div>
+
             <img id="story-card-img" src="" alt="" class="story-card-bg hidden" />
             <div class="story-card-inner">
                 <p id="story-card-stage" class="story-card-stage"></p>
@@ -144,8 +158,8 @@
                     <div class="sc-tip"><span class="sc-tip-icon">⚡</span><span class="sc-tip-text"><strong>Hit in a row</strong> for a Combo bonus!</span></div>
                     <div class="sc-tip"><span class="sc-tip-icon">💖</span><span class="sc-tip-text"><strong>Collect hearts</strong> to restore your Mauri</span></div>
                 </div>
-                <button type="button" id="story-card-begin">Begin Stage</button>
             </div>
+
         </div>
 
         <!-- Error card (replaces alert()) -->
@@ -343,18 +357,25 @@
             </div>
         </div>
 
-        <!-- Name setup overlay — shown on first visit only -->
-        <div id="name-setup-overlay" class="hidden">
-            <div class="name-setup-inner">
-                <div class="name-setup-ocean">🌊</div>
-                <p class="name-setup-greeting">Nau mai, haere mai!</p>
-                <h2 class="name-setup-title">Ko wai tō ingoa?</h2>
-                <p class="name-setup-sub">What is your name, warrior?</p>
-                <input id="player-name-input" type="text" class="name-setup-input"
-                    placeholder="Your name" maxlength="24" autocomplete="off" spellcheck="false">
-                <button id="name-setup-confirm" type="button" class="name-setup-btn">
-                    Tūtū ana — Let's go! →
-                </button>
+        <!-- Player badge — persistent top-right corner, visible on non-gameplay screens -->
+        <div id="player-badge" class="player-badge player-badge--new hidden" aria-label="Current player">
+            <button class="pb-trigger" id="pb-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+                <div class="pb-avatar" id="pb-avatar">?</div>
+                <div class="pb-info">
+                    <span class="pb-label">Playing as</span>
+                    <span class="pb-name" id="pb-name">Tap to add name</span>
+                </div>
+                <span class="pb-chevron" aria-hidden="true">▾</span>
+            </button>
+            <!-- Inline popover -->
+            <div id="pb-popover" class="pb-popover hidden" role="dialog" aria-label="Choose player">
+                <p class="pb-pop-label">Who's playing?</p>
+                <div class="name-setup-field-wrap">
+                    <input id="player-name-input" type="text" class="pb-input"
+                        placeholder="Type your name…" maxlength="24" autocomplete="off" spellcheck="false">
+                    <ul id="player-name-suggestions" class="name-suggestions hidden" role="listbox" aria-label="Known players"></ul>
+                </div>
+                <button id="pb-confirm" type="button" class="pb-confirm-btn">Confirm →</button>
             </div>
         </div>
         <div id="game-over-screen" class="hidden">
