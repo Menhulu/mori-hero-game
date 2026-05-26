@@ -2333,6 +2333,25 @@ body {
     text-overflow: ellipsis;
 }
 .gc-lb-row--current .gc-lb-name { color: #ffd166; }
+.gc-lb-default-tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(202, 240, 248, 0.5);
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+    letter-spacing: 0.04em;
+}
+.gc-lb-name-hint {
+    margin-top: 14px;
+    font-size: 13px;
+    color: rgba(202, 240, 248, 0.55);
+    text-align: center;
+    line-height: 1.5;
+    padding: 0 8px;
+}
 .gc-lb-score {
     color: #fff;
     font-size: clamp(16px, 2vw, 22px);
@@ -2951,9 +2970,7 @@ body {
     position: fixed;
     inset: 0;
     z-index: 500;
-    background: rgba(2, 10, 22, 0.82);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;

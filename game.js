@@ -2760,8 +2760,8 @@ const STAGE_NARRATION_FILES = [
 ];
 
 // ── Narration mute preference (persisted in localStorage) ───────────────────
-// Default: muted unless the user has explicitly turned it ON before
-let narrationMuted      = localStorage.getItem("narrationMuted") !== "false";
+// Default: unmuted unless the user has explicitly turned it OFF before
+let narrationMuted      = localStorage.getItem("narrationMuted") === "true";
 let _narrationHintShown = localStorage.getItem("narrationHintShown") === "true";
 
 let _narrationAudio = null;   // the one active HTMLAudioElement
@@ -3529,12 +3529,26 @@ function showGameComplete() {
         const top5   = [...lb].sort((a, b) => b.best - a.best).slice(0, 5);
         lbEl.innerHTML = top5.map((e, i) => {
             const isCurrent = e.name.trim().toLowerCase() === myKey;
+            const isDefault = isCurrent && !currentPlayerName;
+            const displayName = isDefault
+                ? `Toa <span class="gc-lb-default-tag">default</span>`
+                : e.name;
             return `<li class="gc-lb-row${isCurrent ? " gc-lb-row--current" : ""}">
                 <span class="gc-lb-rank">${medals[i] ?? (i + 1)}</span>
-                <span class="gc-lb-name">${e.name}</span>
+                <span class="gc-lb-name">${displayName}</span>
                 <span class="gc-lb-score">${e.best}</span>
             </li>`;
         }).join("");
+
+        // Remind anonymous player to add their name
+        if (!currentPlayerName) {
+            const hint = document.createElement("p");
+            hint.className = "gc-lb-name-hint";
+            hint.textContent = "Playing as \"Toa\" (default) — tap the badge (top-right) on the home screen to add your name!";
+            lbEl.after(hint);
+        } else {
+            document.querySelector(".gc-lb-name-hint")?.remove();
+        }
     }
 
     gameCompleteScreen.style.backgroundImage = "url('img/story-card/5-Win.png')";
@@ -4491,21 +4505,16 @@ function enableStartAfterCamera() {
     _refreshStartBtn();
 }
 
-/** Enable the Start button only when BOTH camera is ready AND a name is set. */
+/** Enable the Start button once camera is ready. Name is optional. */
 function _refreshStartBtn() {
     const cameraStatusEl = document.getElementById("camera-status");
-    const hasName = !!currentPlayerName;
-
     if (!_cameraReady) return; // camera not done yet — leave as-is
 
-    if (!hasName) {
-        startBtn.disabled = true;
-        if (cameraStatusEl)
-            cameraStatusEl.textContent = "Camera ready — please add your name (top-right) to begin.";
-    } else {
-        startBtn.disabled = false;
-        if (cameraStatusEl)
-            cameraStatusEl.textContent = "Camera is ready. You can start the game.";
+    startBtn.disabled = false;
+    if (cameraStatusEl) {
+        cameraStatusEl.textContent = currentPlayerName
+            ? "Camera is ready. You can start the game."
+            : "Camera is ready. You can start — or add your name (top-right) first!";
     }
 }
 
