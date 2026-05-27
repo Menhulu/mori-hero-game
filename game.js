@@ -2241,7 +2241,7 @@ function ovIconStatsHTML(details, isLocked) {
             <span class="ov-istat-icon">🐙</span>
             <div class="ov-istat-text">
                 <span class="ov-istat-val">${creatures}</span>
-                <span class="ov-istat-lbl">Creatures</span>
+                <span class="ov-istat-lbl">Per Wave</span>
             </div>
         </div>
         <div class="ov-istat" tabindex="0" data-tip="How fast creatures move — Calm is easiest, Fierce is hardest">
