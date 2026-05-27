@@ -53,7 +53,7 @@ const STAGE_CONFIGS = [
             speed: { vyMin: 12, vyMax: 15, vxMax: 4.0 },
             gravity: 0.15,
             spawnInterval: { min: 2600, max: 3600 },
-            spawnCount: { min: 3, max: 4 },
+            spawnCount: { min: 4, max: 5 },
             levelUpBonus: 0.45
         },
         pointsPerKill: 20
@@ -71,7 +71,7 @@ const STAGE_CONFIGS = [
             speed: { vyMin: 14, vyMax: 18, vxMax: 5.5 },
             gravity: 0.20,
             spawnInterval: { min: 2000, max: 2800 },
-            spawnCount: { min: 3, max: 5 },
+            spawnCount: { min: 4, max: 6 },
             levelUpBonus: 0.65
         },
         pointsPerKill: 28
@@ -155,7 +155,7 @@ const STAGE_OVERVIEW = [
         motto: "Wero Tino — Focused Challenge",
         cardImg: "img/story-card/3-Focused Challenge.png",
         details: [
-            { label: "Creatures per wave",  value: "3 – 4",                   icon: "wave" },
+            { label: "Creatures per wave",  value: "4 – 5",                   icon: "wave" },
             { label: "Speed",               value: "Fast",                     icon: "bolt" },
             { label: "Creature size",       value: "Smaller",                  icon: "resize"},
             { label: "Points per creature", value: "20 pts",                   icon: "star" },
@@ -171,7 +171,7 @@ const STAGE_OVERVIEW = [
         motto: "Ngāwhatu Kai-ponu — Final Strike",
         cardImg: "img/story-card/4-Final Strike.png",
         details: [
-            { label: "Creatures per wave",  value: "3 – 5",                icon: "wave"  },
+            { label: "Creatures per wave",  value: "4 – 6",                icon: "wave"  },
             { label: "Speed",               value: "Fierce",                icon: "flame" },
             { label: "Creature size",       value: "Smallest",              icon: "resize"},
             { label: "Points per creature", value: "28 pts",                icon: "star"  },

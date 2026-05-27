@@ -2733,8 +2733,8 @@ body {
 
 /* Locked — muted */
 .ov-card--locked {
-    opacity: 0.52;
-    filter: grayscale(0.35);
+    opacity: 0.82;
+    filter: grayscale(0.15);
 }
 
 /* ── Card image panel ────────────────────────────────────────────── */
@@ -2825,7 +2825,7 @@ body {
 
 /* Locked card — image is fogged */
 .ov-card--locked .ov-img {
-    filter: brightness(0.52) saturate(0.35);
+    filter: brightness(0.78) saturate(0.70);
 }
 
 /* ── Card body panel ─────────────────────────────────────────────── */
